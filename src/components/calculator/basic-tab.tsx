@@ -25,151 +25,131 @@ export default function BasicTab() {
   const [display, setDisplay] = useState('0');
   const [expression, setExpression] = useState('');
   const [isResult, setIsResult] = useState(false);
-  const [currentNumber, setCurrentNumber] = useState('0');
+  const [hasDecimal, setHasDecimal] = useState(false);
 
   const evaluateExpression = (exp: string): string => {
     try {
-      const evaluatableExpression = exp.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-      if (/[^0-9+\-*/.%() ]/.test(evaluatableExpression)) {
+      const evaluatableExpression = exp
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/−/g, '-')
+        .replace(/--/g, '+');
+
+      // Basic safety check
+      if (/[^0-9+\-*/.() ]/.test(evaluatableExpression)) {
         return "Error";
       }
+
+      // Avoid evaluating empty or incomplete expressions
+      if (evaluatableExpression.trim() === '' || /[+\-*/.]$/.test(evaluatableExpression.trim())) {
+        return display; // Return current display if expression is incomplete
+      }
+
       const result = new Function(`return ${evaluatableExpression}`)();
-       if (isNaN(result) || !isFinite(result)) return "Error";
+      if (isNaN(result) || !isFinite(result)) return "Error";
       return String(Number(result.toPrecision(10)));
     } catch (error) {
       return "Error";
     }
   };
 
-  const handleInput = (char: string) => {
+  const handleInput = (val: string) => {
     if (isResult) {
-      clearDisplay();
-      setCurrentNumber(char);
-      setDisplay(char);
-      setExpression(char);
+      setExpression(val);
+      setDisplay(val);
       setIsResult(false);
-      return;
-    }
-    
-    const newCurrentNumber = currentNumber === '0' && char !== '.' ? char : currentNumber + char;
-    setCurrentNumber(newCurrentNumber);
-    setDisplay(newCurrentNumber);
-
-    if (expression.match(/(\s[+\-×÷]\s)$/)) { // If last thing was operator
-      setExpression(prev => prev + newCurrentNumber);
-    } else if (expression.includes(' ')) { // If we are editing the second number
-        const parts = expression.split(' ');
-        parts[2] = newCurrentNumber;
-        setExpression(parts.join(' '));
-    } else { // First number
-        setExpression(newCurrentNumber);
+    } else {
+      setExpression(prev => (prev === '0' ? val : prev + val));
+      setDisplay(prev => (prev === '0' ? val : prev + val));
     }
   };
 
   const handleOperator = (op: string) => {
-     if (expression.slice(-1) === ' ') return;
-     if (isResult) {
-        setIsResult(false);
-     }
-     
-     if (expression && !expression.match(/(\s[+\-×÷]\s)$/)) {
-        const evaluated = evaluateExpression(expression);
-        setExpression(evaluated + ` ${op} `);
-        setDisplay(evaluated);
-     } else {
-        setExpression(prev => prev + ` ${op} `);
-     }
-     setCurrentNumber('0');
-  }
+    // If we have a result, use it as the start of the new expression
+    if (isResult) {
+      setExpression(display + ` ${op} `);
+      setIsResult(false);
+    } else if (expression && !expression.endsWith(' ')) {
+      // If the last char is not an operator, add the new one
+      setExpression(prev => prev + ` ${op} `);
+    } else if (expression.endsWith(' ')) {
+        // If the last char is an operator, replace it
+        setExpression(prev => prev.slice(0, -3) + ` ${op} `)
+    }
+    setHasDecimal(false);
+    // The display now shows the full expression
+    setDisplay(expression + ` ${op} `);
+  };
+  
+  const inputDecimal = () => {
+    if (isResult) {
+      setExpression('0.');
+      setDisplay('0.');
+      setIsResult(false);
+      setHasDecimal(true);
+      return;
+    }
 
-  const handleEquals = () => {
-    if (expression && !expression.endsWith(' ')) {
-        const result = evaluateExpression(expression);
-        setDisplay(result);
-        setExpression(result);
-        setIsResult(true);
+    const currentNumber = expression.split(/ [+\-×÷] /).pop() || '';
+    if (!currentNumber.includes('.')) {
+      const newExpression = expression + '.';
+      setExpression(newExpression);
+      setDisplay(newExpression);
+      setHasDecimal(true);
     }
   };
 
+  const handleEquals = () => {
+    if (expression && !expression.endsWith(' ')) {
+      const result = evaluateExpression(expression);
+      setDisplay(result);
+      setExpression(result);
+      setIsResult(true);
+      setHasDecimal(result.includes('.'));
+    }
+  };
+  
   const clearDisplay = () => {
     setDisplay('0');
     setExpression('');
-    setCurrentNumber('0');
     setIsResult(false);
+    setHasDecimal(false);
   };
   
   const handleBackspace = () => {
     if (isResult) return;
-    
-    if (currentNumber !== '0' && currentNumber.length > 0) {
-        const newCurrentNumber = currentNumber.slice(0, -1) || '0';
-        setCurrentNumber(newCurrentNumber);
-        setDisplay(newCurrentNumber);
-        
-        const expressionParts = expression.trim().split(' ');
-        expressionParts[expressionParts.length - 1] = newCurrentNumber;
-        setExpression(expressionParts.join(' '));
+    if (expression.endsWith(' ')) {
+        // remove operator and spaces
+        setExpression(prev => prev.slice(0, -3));
+        setDisplay(prev => prev.slice(0, -3));
+    } else {
+        const newExpression = expression.slice(0, -1) || '0';
+        setExpression(newExpression);
+        setDisplay(newExpression);
+        if(!newExpression.split(/ [+\-×÷] /).pop()?.includes('.')) {
+            setHasDecimal(false);
+        }
     }
   };
 
   const toggleSign = () => {
-     if (display !== '0' && !isResult) {
-       const newValue = String(parseFloat(display) * -1);
-       setDisplay(newValue);
-       setCurrentNumber(newValue);
-       setExpression(prev => {
-           const parts = prev.split(' ');
-           parts[parts.length -1] = newValue;
-           return parts.join(' ');
-       });
-     }
-  }
-  
-  const percentage = () => {
-    if (!isResult && display !== '0') {
-      const value = parseFloat(display) / 100;
-      const cleanValue = String(Number(value.toPrecision(10)));
-       setDisplay(cleanValue);
-       setCurrentNumber(cleanValue);
-       setExpression(prev => {
-           const parts = prev.split(' ');
-           parts[parts.length - 1] = cleanValue;
-           return parts.join(' ');
-       });
+    if (display === '0' || isResult) return;
+    
+    // This is a simplified toggle sign that prepends a minus, better logic would be needed for complex expressions
+    if (display.startsWith('-')) {
+      setDisplay(display.substring(1));
+      setExpression(expression.substring(1));
+    } else {
+      setDisplay('-' + display);
+      setExpression('-' + expression);
     }
   }
   
-  const inputDecimal = () => {
-      if (isResult) {
-          clearDisplay();
-          setCurrentNumber('0.');
-          setDisplay('0.');
-          setExpression('0.');
-          setIsResult(false);
-          return;
-      }
-      if (!currentNumber.includes('.')) {
-          const newCurrentNumber = currentNumber + '.';
-          setCurrentNumber(newCurrentNumber);
-          setDisplay(newCurrentNumber);
-          
-          if (expression.match(/(\s[+\-×÷]\s)$/)) {
-            setExpression(prev => prev + newCurrentNumber);
-          } else if (expression.includes(' ')) {
-              const parts = expression.split(' ');
-              parts[2] = newCurrentNumber;
-              setExpression(parts.join(' '));
-          } else {
-              setExpression(newCurrentNumber);
-          }
-      }
-  }
-
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
-       <Display value={display} expression={isResult ? '' : expression.replace(/ =$/, '')} />
+       <Display value={display} expression={isResult ? `Ans = ${display}` : expression} />
        <div className="grid grid-cols-4 gap-2">
-        <CalculatorButton onClick={clearDisplay} label={<Trash className="w-6 h-6" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={handleBackspace} label={<Delete className="w-6 h-6" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => handleOperator('÷')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />

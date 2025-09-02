@@ -36,3 +36,7 @@ Powered by **Gemini AI** + smart APIs, PiGoAt solves equations, explains them, a
 * 📱 Responsive for both web & mobile
 
 ---
+
+## 🐐 Why PiGoAt?
+
+Because it’s the Pi-powered GOAT (Greatest of All Time) calculator — blending math, AI, and real-world context.
