@@ -20,10 +20,11 @@ const CalculatorButton = ({
 );
 
 export default function ScientificTab() {
-    const [currentValue, setCurrentValue] = useState('0');
-    const [previousValue, setPreviousValue] = useState<string | null>(null);
+    const [display, setDisplay] = useState('0');
+    const [firstOperand, setFirstOperand] = useState<number | null>(null);
     const [operator, setOperator] = useState<string | null>(null);
-    const [overwrite, setOverwrite] = useState(true);
+    const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
+
 
     const calculate = (first: number, second: number, op: string): number => {
         switch (op) {
@@ -37,62 +38,69 @@ export default function ScientificTab() {
     };
 
     const clear = () => {
-        setCurrentValue('0');
-        setPreviousValue(null);
+        setDisplay('0');
+        setFirstOperand(null);
         setOperator(null);
-        setOverwrite(true);
+        setWaitingForSecondOperand(false);
     };
 
     const backspace = () => {
-        if (currentValue.length > 1) {
-            setCurrentValue(currentValue.slice(0, -1));
+        if (display.length > 1) {
+            setDisplay(display.slice(0, -1));
         } else {
-            setCurrentValue('0');
-            setOverwrite(true);
+            setDisplay('0');
         }
     };
 
     const inputDigit = (digit: string) => {
-        if (overwrite) {
-            setCurrentValue(digit);
-            setOverwrite(false);
+        if (waitingForSecondOperand) {
+            setDisplay(digit);
+            setWaitingForSecondOperand(false);
         } else {
-            if (currentValue === '0' && digit !== '.') {
-                setCurrentValue(digit);
-            } else if (digit === '.' && currentValue.includes('.')) {
+            if (display === '0' && digit !== '.') {
+                setDisplay(digit);
+            } else if (digit === '.' && display.includes('.')) {
                 return;
             } 
             else {
-                setCurrentValue(`${currentValue}${digit}`);
+                setDisplay(`${display}${digit}`);
             }
         }
     };
 
     const chooseOperator = (nextOperator: string) => {
-        if (previousValue && operator && !overwrite) {
-            const result = calculate(parseFloat(previousValue), parseFloat(currentValue), operator);
+        const inputValue = parseFloat(display);
+
+        if (operator && waitingForSecondOperand) {
+            setOperator(nextOperator);
+            return;
+        }
+
+        if (firstOperand === null) {
+            setFirstOperand(inputValue);
+        } else if (operator) {
+            const result = calculate(firstOperand, inputValue, operator);
             const resultStr = String(result);
-            setCurrentValue(resultStr);
-            setPreviousValue(resultStr);
-        } else {
-            setPreviousValue(currentValue);
+            setDisplay(resultStr);
+            setFirstOperand(result);
         }
         
+        setWaitingForSecondOperand(true);
         setOperator(nextOperator);
-        setOverwrite(true);
     };
 
     const handleEquals = () => {
-        if (!previousValue || !operator) return;
-        const result = calculate(parseFloat(previousValue), parseFloat(currentValue), operator);
-        setCurrentValue(String(result));
-        setPreviousValue(null);
+        if (!operator || firstOperand === null) return;
+        const inputValue = parseFloat(display);
+        const result = calculate(firstOperand, inputValue, operator);
+        setDisplay(String(result));
+        setFirstOperand(null);
         setOperator(null);
-        setOverwrite(true);
+        setWaitingForSecondOperand(false);
     };
 
     const handleUnaryOperation = (op: string) => {
-        const value = parseFloat(currentValue);
+        const value = parseFloat(display);
         let result = 0;
         try {
             switch(op) {
@@ -107,10 +115,10 @@ export default function ScientificTab() {
               case 'sqrt': result = Math.sqrt(value); break;
               case 'x!':
                 if (value < 0 || !Number.isInteger(value)) {
-                    setCurrentValue("Error"); setOverwrite(true); return;
+                    setDisplay("Error"); setWaitingForSecondOperand(true); return;
                 }
                 if (value > 170) {
-                    setCurrentValue("Infinity"); setOverwrite(true); return;
+                    setDisplay("Infinity"); setWaitingForSecondOperand(true); return;
                 }
                 let fact = 1;
                 for (let i = 2; i <= value; i++) fact *= i;
@@ -119,27 +127,27 @@ export default function ScientificTab() {
               case 'e^x': result = Math.exp(value); break;
               case '1/x': 
                 if (value === 0) {
-                    setCurrentValue("Error"); setOverwrite(true); return;
+                    setDisplay("Error"); setWaitingForSecondOperand(true); return;
                 }
                 result = 1 / value; break;
               case 'x^2': result = Math.pow(value, 2); break;
               case 'x^3': result = Math.pow(value, 3); break;
             }
             if (isNaN(result) || !isFinite(result)) {
-                setCurrentValue("Error");
+                setDisplay("Error");
             } else {
-                setCurrentValue(String(result));
+                setDisplay(String(result));
             }
         } catch {
-            setCurrentValue("Error");
+            setDisplay("Error");
         }
-        setOverwrite(true);
+        setWaitingForSecondOperand(true);
       };
 
     return (
         <div className="w-full max-w-md mx-auto space-y-4">
             <div className="bg-muted/50 p-4 rounded-lg text-right h-20 flex items-center justify-end">
-                <p className="text-4xl font-mono font-light break-all">{currentValue}</p>
+                <p className="text-4xl font-mono font-light break-all">{display}</p>
             </div>
             <div className="grid grid-cols-6 gap-2">
                 <CalculatorButton onClick={() => handleUnaryOperation('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -171,12 +179,13 @@ export default function ScientificTab() {
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => chooseOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => { setCurrentValue(String(Math.PI)); setOverwrite(true); }} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => { setCurrentValue(String(Math.E)); setOverwrite(true); }} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => setCurrentValue(String(parseFloat(currentValue) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => { setDisplay(String(Math.PI)); setWaitingForSecondOperand(false); }} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => { setDisplay(String(Math.E)); setWaitingForSecondOperand(false); }} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => inputDigit('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => inputDigit('.')} label="." className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
         </div>
     );
+}
