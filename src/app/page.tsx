@@ -9,10 +9,14 @@ import ScientificTab from "@/components/calculator/scientific-tab";
 import MatrixTab from "@/components/calculator/matrix-tab";
 import PolynomialTab from "@/components/calculator/polynomial-tab";
 import { BrainCircuit, Calculator, Sigma, FunctionSquare, Bot, Variable } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 bg-background relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-2xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="font-headline text-5xl font-bold text-primary">PiGoAt</h1>
