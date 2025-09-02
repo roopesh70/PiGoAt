@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addMatrices, multiplyMatrices, determinant } from '@/lib/math-helpers';
+import { addMatrices, multiplyMatrices, determinant, inverse, eigenvalues } from '@/lib/math-helpers';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -65,7 +65,7 @@ export default function MatrixTab() {
 
     const [matrixA, setMatrixA] = useState<Matrix>(createEmptyMatrix(2, 2));
     const [matrixB, setMatrixB] = useState<Matrix>(createEmptyMatrix(2, 2));
-    const [result, setResult] = useState<Matrix | number | null>(null);
+    const [result, setResult] = useState<Matrix | number | string | null>(null);
     const [unaryOpTarget, setUnaryOpTarget] = useState<UnaryOperationTarget>('A');
 
 
@@ -84,9 +84,13 @@ export default function MatrixTab() {
         setResult(null);
     };
     
-    const isMatrixASquare = rows > 0 && rows === cols;
-    const isMatrixBSquare = rows > 0 && rows === cols;
-    const isTargetMatrixSquare = unaryOpTarget === 'A' ? isMatrixASquare : isMatrixBSquare;
+    const isMatrixASquare = matrixA.length > 0 && matrixA.length === matrixA[0].length;
+    const isMatrixBSquare = matrixB.length > 0 && matrixB.length === matrixB[0].length;
+    const getTargetMatrix = () => unaryOpTarget === 'A' ? matrixA : matrixB;
+    const isTargetMatrixSquare = () => {
+        const target = getTargetMatrix();
+        return target.length > 0 && target.length === target[0].length;
+    }
 
     const handleOperation = (op: 'add' | 'multiply' | 'determinant' | 'inverse' | 'eigenvalues') => {
         setResult(null);
@@ -96,26 +100,28 @@ export default function MatrixTab() {
                     setResult(addMatrices(matrixA, matrixB));
                     break;
                 case 'multiply':
-                    if (cols !== rows) {
-                        toast({ variant: 'destructive', title: 'Error', description: "For multiplication of matrices of the same size, they must be square." });
-                        return;
-                    }
                     setResult(multiplyMatrices(matrixA, matrixB));
                     break;
                 case 'determinant':
-                     if (!isTargetMatrixSquare) {
+                     if (!isTargetMatrixSquare()) {
                         toast({ variant: 'destructive', title: 'Error', description: `Matrix ${unaryOpTarget} must be square for this operation.` });
                         return;
                     }
-                    setResult(determinant(unaryOpTarget === 'A' ? matrixA : matrixB));
+                    setResult(determinant(getTargetMatrix()));
                     break;
                 case 'inverse':
-                case 'eigenvalues':
-                     if (!isTargetMatrixSquare) {
+                     if (!isTargetMatrixSquare()) {
                         toast({ variant: 'destructive', title: 'Error', description: `Matrix ${unaryOpTarget} must be square for this operation.` });
                         return;
                     }
-                    toast({ title: 'Coming Soon!', description: 'This feature is under development.' });
+                    setResult(inverse(getTargetMatrix()));
+                    break;
+                case 'eigenvalues':
+                     if (!isTargetMatrixSquare()) {
+                        toast({ variant: 'destructive', title: 'Error', description: `Matrix ${unaryOpTarget} must be square for this operation.` });
+                        return;
+                    }
+                    setResult(eigenvalues(getTargetMatrix()));
                     break;
             }
         } catch (error) {
@@ -180,9 +186,9 @@ export default function MatrixTab() {
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     <Button onClick={() => handleOperation('add')}>A + B</Button>
                     <Button onClick={() => handleOperation('multiply')}>A × B</Button>
-                    <Button onClick={() => handleOperation('determinant')} disabled={!isTargetMatrixSquare}>Determinant</Button>
-                    <Button onClick={() => handleOperation('inverse')} disabled={!isTargetMatrixSquare}>Inverse</Button>
-                    <Button onClick={() => handleOperation('eigenvalues')} disabled={!isTargetMatrixSquare}>Eigenvalues</Button>
+                    <Button onClick={() => handleOperation('determinant')} disabled={!isTargetMatrixSquare()}>Determinant</Button>
+                    <Button onClick={() => handleOperation('inverse')} disabled={!isTargetMatrixSquare()}>Inverse</Button>
+                    <Button onClick={() => handleOperation('eigenvalues')} disabled={!isTargetMatrixSquare()}>Eigenvalues</Button>
                 </div>
             </div>
 
@@ -193,14 +199,16 @@ export default function MatrixTab() {
                     </CardHeader>
                     <CardContent>
                         {typeof result === 'number' ? (
-                            <p className="text-3xl font-mono font-bold text-primary">{result}</p>
+                            <p className="text-3xl font-mono font-bold text-primary">{result.toFixed(4)}</p>
+                        ) : typeof result === 'string' ? (
+                             <p className="text-lg font-mono font-bold text-primary">{result}</p>
                         ) : (
                             <div className="space-y-2 overflow-x-auto">
                                 {result.map((row, r) => (
                                     <div key={r} className="flex gap-2">
                                         {row.map((val, c) => (
                                             <div key={c} className="w-20 h-10 flex-shrink-0 flex items-center justify-center bg-muted rounded">
-                                                {val.toFixed(2)}
+                                                {Number.isInteger(val) ? val : val.toFixed(3)}
                                             </div>
                                         ))}
                                     </div>
@@ -213,4 +221,3 @@ export default function MatrixTab() {
         </div>
     );
 }
-

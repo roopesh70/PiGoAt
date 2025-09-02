@@ -1,41 +1,50 @@
-type Matrix = number[][];
+import { create, all, MathJsStatic, Matrix, Eigensystem } from 'mathjs';
+
+const math: MathJsStatic = create(all);
+
+type MyMatrix = number[][];
 
 // Matrix Helpers
-export function addMatrices(a: Matrix, b: Matrix): Matrix {
+export function addMatrices(a: MyMatrix, b: MyMatrix): MyMatrix {
     if (a.length !== b.length || a[0].length !== b[0].length) {
         throw new Error("Matrices must have the same dimensions for addition.");
     }
-    return a.map((row, r) => row.map((val, c) => val + b[r][c]));
+    const result = math.add(math.matrix(a), math.matrix(b));
+    return result.toArray() as MyMatrix;
 }
 
-export function multiplyMatrices(a: Matrix, b: Matrix): Matrix {
+export function multiplyMatrices(a: MyMatrix, b: MyMatrix): MyMatrix {
     if (a[0].length !== b.length) {
         throw new Error("The number of columns in Matrix A must equal the number of rows in Matrix B.");
     }
-    const result: Matrix = Array(a.length).fill(0).map(() => Array(b[0].length).fill(0));
-    for (let i = 0; i < a.length; i++) {
-        for (let j = 0; j < b[0].length; j++) {
-            for (let k = 0; k < a[0].length; k++) {
-                result[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-    return result;
+    const result = math.multiply(math.matrix(a), math.matrix(b));
+    return result.toArray() as MyMatrix;
 }
 
-export function determinant(m: Matrix): number {
-    const n = m.length;
-    if (n === 1) return m[0][0];
-    if (n === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
-    if (n === 3) {
-        return (
-            m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
-            m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-            m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
-        );
+export function determinant(m: MyMatrix): number {
+    if (m.length !== m[0].length) {
+        throw new Error("Matrix must be square to calculate the determinant.");
     }
-    throw new Error("Determinant for matrices larger than 3x3 is not supported in this version.");
+    return math.det(math.matrix(m));
 }
+
+export function inverse(m: MyMatrix): MyMatrix {
+    if (m.length !== m[0].length) {
+        throw new Error("Matrix must be square to calculate the inverse.");
+    }
+    const result = math.inv(math.matrix(m));
+    return result.toArray() as MyMatrix;
+}
+
+export function eigenvalues(m: MyMatrix): string {
+    if (m.length !== m[0].length) {
+        throw new Error("Matrix must be square to calculate eigenvalues.");
+    }
+    const result: Eigensystem = math.eigs(math.matrix(m));
+    const values: any[] = result.values.toArray();
+    return values.map(v => typeof v === 'number' ? v.toFixed(3) : math.format(v, {notation: 'fixed', precision: 3})).join(', ');
+}
+
 
 // Polynomial Helpers
 export function solveQuadratic(a: number, b: number, c: number): string {
