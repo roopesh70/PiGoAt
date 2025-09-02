@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { addMatrices, multiplyMatrices, determinant } from '@/lib/math-helpers';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Label } from '../ui/label';
 
 type Matrix = number[][];
+type UnaryOperationTarget = 'A' | 'B';
 
 const MatrixInput = ({ matrix, setMatrix }: { matrix: Matrix, setMatrix: (m: Matrix) => void }) => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, r: number, c: number) => {
@@ -45,11 +48,7 @@ const SizeSelector = ({ label, value, onChange }: { label: string, value: number
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
+                {[1,2,3,4,5].map(v => <SelectItem key={v} value={String(v)}>{v}</SelectItem>)}
             </SelectContent>
         </Select>
     </div>
@@ -67,6 +66,8 @@ export default function MatrixTab() {
     const [matrixA, setMatrixA] = useState<Matrix>(createEmptyMatrix(2, 2));
     const [matrixB, setMatrixB] = useState<Matrix>(createEmptyMatrix(2, 2));
     const [result, setResult] = useState<Matrix | number | null>(null);
+    const [unaryOpTarget, setUnaryOpTarget] = useState<UnaryOperationTarget>('A');
+
 
     const handleSizeChangeA = (dimension: 'rows' | 'cols', valueStr: string) => {
         const value = parseInt(valueStr, 10);
@@ -96,9 +97,11 @@ export default function MatrixTab() {
         setResult(null);
     };
 
-    const isMatrixASquare = rowsA === colsA;
+    const isMatrixASquare = rowsA > 0 && rowsA === colsA;
+    const isMatrixBSquare = rowsB > 0 && rowsB === colsB;
+    const isTargetMatrixSquare = unaryOpTarget === 'A' ? isMatrixASquare : isMatrixBSquare;
 
-    const handleOperation = (op: 'add' | 'multiply' | 'determinantA' | 'inverseA' | 'eigenvaluesA') => {
+    const handleOperation = (op: 'add' | 'multiply' | 'determinant' | 'inverse' | 'eigenvalues') => {
         setResult(null);
         try {
             switch (op) {
@@ -116,15 +119,19 @@ export default function MatrixTab() {
                     }
                     setResult(multiplyMatrices(matrixA, matrixB));
                     break;
-                case 'determinantA':
-                     if (!isMatrixASquare) {
-                        toast({ variant: 'destructive', title: 'Error', description: 'Determinant can only be calculated for square matrices.' });
+                case 'determinant':
+                     if (!isTargetMatrixSquare) {
+                        toast({ variant: 'destructive', title: 'Error', description: `Matrix ${unaryOpTarget} must be square for this operation.` });
                         return;
                     }
-                    setResult(determinant(matrixA));
+                    setResult(determinant(unaryOpTarget === 'A' ? matrixA : matrixB));
                     break;
-                case 'inverseA':
-                case 'eigenvaluesA':
+                case 'inverse':
+                case 'eigenvalues':
+                     if (!isTargetMatrixSquare) {
+                        toast({ variant: 'destructive', title: 'Error', description: `Matrix ${unaryOpTarget} must be square for this operation.` });
+                        return;
+                    }
                     toast({ title: 'Coming Soon!', description: 'This feature is under development.' });
                     break;
             }
@@ -162,14 +169,27 @@ export default function MatrixTab() {
             
             <Separator />
 
-            <div className="space-y-2">
-                <h4 className="font-medium">Operations</h4>
+            <div className="space-y-4">
+                <h4 className="font-medium text-center">Operations</h4>
+                <div className="flex justify-center items-center gap-4">
+                     <p className="text-sm font-medium">Target:</p>
+                    <RadioGroup value={unaryOpTarget} onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                           <RadioGroupItem value="A" id="r_a" />
+                           <Label htmlFor="r_a">Matrix A</Label>
+                        </div>
+                         <div className="flex items-center space-x-2">
+                           <RadioGroupItem value="B" id="r_b" />
+                           <Label htmlFor="r_b">Matrix B</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     <Button onClick={() => handleOperation('add')}>A + B</Button>
                     <Button onClick={() => handleOperation('multiply')}>A × B</Button>
-                    <Button onClick={() => handleOperation('determinantA')} disabled={!isMatrixASquare}>det(A)</Button>
-                    <Button onClick={() => handleOperation('inverseA')} disabled={!isMatrixASquare}>inv(A)</Button>
-                    <Button onClick={() => handleOperation('eigenvaluesA')} disabled={!isMatrixASquare}>eig(A)</Button>
+                    <Button onClick={() => handleOperation('determinant')} disabled={!isTargetMatrixSquare}>Determinant</Button>
+                    <Button onClick={() => handleOperation('inverse')} disabled={!isTargetMatrixSquare}>Inverse</Button>
+                    <Button onClick={() => handleOperation('eigenvalues')} disabled={!isTargetMatrixSquare}>Eigenvalues</Button>
                 </div>
             </div>
 
