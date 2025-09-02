@@ -15,6 +15,10 @@ export default function SmartTab() {
     const handleQuery = () => {
         setError(null);
         setResult(null);
+        if (!query) {
+            setError("Please enter a query.");
+            return;
+        }
         try {
             const conversionResult = parseSmartQuery(query);
             setResult(conversionResult);
@@ -32,6 +36,19 @@ export default function SmartTab() {
             handleQuery();
         }
     };
+
+    const handleExampleClick = (exampleQuery: string) => {
+        setQuery(exampleQuery);
+        setError(null);
+        setResult(null);
+    };
+
+    const examples = [
+        '100 USD to INR',
+        '5 km to miles',
+        '10 kg to lbs',
+        '30 C to F',
+    ];
 
     return (
         <div className="space-y-6">
@@ -77,10 +94,13 @@ export default function SmartTab() {
                 </CardHeader>
                 <CardContent>
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        <li>100 USD to INR</li>
-                        <li>5 km to miles</li>
-                        <li>10 kg to lbs</li>
-                        <li>30 C to F</li>
+                        {examples.map((example, index) => (
+                            <li key={index} >
+                                <button onClick={() => handleExampleClick(example)} className="text-left hover:underline focus:outline-none focus:underline">
+                                    {example}
+                                </button>
+                            </li>
+                        ))}
                     </ul>
                 </CardContent>
             </Card>

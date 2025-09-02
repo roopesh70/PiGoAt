@@ -40,6 +40,10 @@ export default function ScientificTab() {
     setOperator(null);
     setWaitingForSecondOperand(false);
   };
+  
+  const backspace = () => {
+    setDisplay(display.slice(0, -1) || '0');
+  }
 
   const performOperation = (nextOperator: string) => {
     const inputValue = parseFloat(display);
@@ -122,31 +126,30 @@ export default function ScientificTab() {
         <CalculatorButton onClick={() => handleUnaryOperation('x^3')} label="x³" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => performOperation('^')} label="xʸ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={clearDisplay} label="AC" className="bg-destructive/80 text-destructive-foreground hover:bg-destructive" />
-        <CalculatorButton onClick={() => setDisplay(display.slice(0, -1) || '0')} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => performOperation('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
         <CalculatorButton onClick={() => handleUnaryOperation('sqrt')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => handleUnaryOperation('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
         <CalculatorButton onClick={() => performOperation('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-        <CalculatorButton onClick={() => handleUnaryOperation('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => handleUnaryOperation('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => handleUnaryOperation('1/x')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
         <CalculatorButton onClick={() => performOperation('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-        <CalculatorButton onClick={() => handleUnaryOperation('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => handleUnaryOperation('x!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => handleUnaryOperation('e^x')} label="eˣ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
         <CalculatorButton onClick={() => performOperation('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
         
-        <CalculatorButton onClick={() => handleUnaryOperation('x!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={() => handleUnaryOperation('1/x')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={() => inputDigit('0')} label="0" className="col-span-2 bg-card hover:bg-muted" />
-        <CalculatorButton onClick={() => { if (!display.includes('.')) setDisplay(display + '.')}} label="." className="bg-card hover:bg-muted" />
-        <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
-        
-        <CalculatorButton onClick={() => handleUnaryOperation('e^x')} label="eˣ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => setDisplay(String(Math.PI))} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => setDisplay(String(Math.E))} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="col-span-2 bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={() => inputDigit('0')} label="0" className="bg-card hover:bg-muted" />
+        <CalculatorButton onClick={() => { if (!display.includes('.')) setDisplay(display + '.')}} label="." className="bg-card hover:bg-muted" />
+        <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
       </div>
     </div>
   );
