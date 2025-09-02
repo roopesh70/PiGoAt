@@ -27,9 +27,9 @@ export const Display: React.FC<DisplayProps> = ({ value, expression, isLatex = f
   };
 
   return (
-    <div className="bg-muted/50 p-4 rounded-lg mb-4 text-right min-h-[96px] flex flex-col justify-end">
+    <div className="bg-muted/50 p-4 rounded-lg mb-4 text-right min-h-[112px] flex flex-col justify-end">
       {expression && (
-        <div className="text-sm text-muted-foreground mb-1 truncate" title={expression}>
+        <div className="text-base text-muted-foreground mb-1 truncate" title={expression}>
           {isLatex ? (
             <InlineMath math={expression} />
           ) : (
@@ -42,7 +42,7 @@ export const Display: React.FC<DisplayProps> = ({ value, expression, isLatex = f
         {isLatex ? (
           <BlockMath math={value} />
         ) : (
-          <div className="text-4xl font-mono overflow-x-auto overflow-y-hidden pb-1 break-all">
+          <div className="text-5xl font-mono overflow-x-auto overflow-y-hidden pb-1 break-all font-light">
             {formatNumber(value)}
           </div>
         )}
