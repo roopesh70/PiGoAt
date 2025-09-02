@@ -4,30 +4,35 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { parseSmartQuery } from '@/lib/conversion-helpers';
-import { Bot, Lightbulb } from 'lucide-react';
+import { smartConvert } from '@/ai/flows/smart-conversion';
+import { Bot, Lightbulb, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export default function SmartTab() {
     const [query, setQuery] = useState('');
     const [result, setResult] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleQuery = () => {
+    const handleQuery = async () => {
         setError(null);
         setResult(null);
         if (!query) {
             setError("Please enter a query.");
             return;
         }
+        setIsLoading(true);
         try {
-            const conversionResult = parseSmartQuery(query);
-            setResult(conversionResult);
+            const conversionResult = await smartConvert({ query });
+            setResult(conversionResult.result);
         } catch (e) {
             if (e instanceof Error) {
                 setError(e.message);
             } else {
                 setError('An unknown error occurred.');
             }
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -66,14 +71,19 @@ export default function SmartTab() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyPress={handleKeyPress}
+                    disabled={isLoading}
                 />
-                <Button onClick={handleQuery}>
-                    <Bot className="mr-2 h-4 w-4" /> Go
+                <Button onClick={handleQuery} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="animate-spin" /> : <Bot />}
+                     Go
                 </Button>
             </div>
 
             {error && (
-                <p className="text-sm text-center text-destructive">{error}</p>
+                 <Alert variant="destructive">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
 
             {result && (
@@ -98,7 +108,7 @@ export default function SmartTab() {
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {examples.map((example, index) => (
                             <li key={index} >
-                                <button onClick={() => handleExampleClick(example)} className="text-left hover:underline focus:outline-none focus:underline">
+                                <button onClick={() => handleExampleClick(example)} className="text-left hover:underline focus:outline-none focus:underline" disabled={isLoading}>
                                     {example}
                                 </button>
                             </li>
