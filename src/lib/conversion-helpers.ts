@@ -70,6 +70,14 @@ export function parseSmartQuery(query: string): string {
             const result = amount * conversion.factor;
             return `${amount} ${fromUnit} = ${result.toFixed(3)} ${conversion.to}`;
         } else {
+             // Handle pluralization in the key, e.g. "watts" -> "watt"
+            const singularToUnit = toUnit.endsWith('s') ? toUnit.slice(0, -1) : toUnit;
+            const singularKey = `${fromUnit}_${singularToUnit}s`; // e.g. hp_watts
+            if(singularKey in UNIT_CONVERSIONS){
+                 const conversion = UNIT_CONVERSIONS[singularKey];
+                 const result = amount * conversion.factor;
+                 return `${amount} ${fromUnit} = ${result.toFixed(3)} ${conversion.to}`;
+            }
             throw new Error(`Unit conversion from ${fromUnit} to ${toUnit} is not supported.`);
         }
     }
