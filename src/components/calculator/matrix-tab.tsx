@@ -48,7 +48,7 @@ const SizeSelector = ({ label, value, onChange }: { label: string, value: number
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                {[1,2,3,4,5].map(v => <SelectItem key={v} value={String(v)}>{v}</SelectItem>)}
+                {[1, 2, 3, 4, 5].map(v => <SelectItem key={v} value={String(v)}>{v}</SelectItem>)}
             </SelectContent>
         </Select>
     </div>
@@ -58,10 +58,8 @@ const SizeSelector = ({ label, value, onChange }: { label: string, value: number
 export default function MatrixTab() {
     const createEmptyMatrix = (rows: number, cols: number) => Array.from({ length: rows }, () => Array(cols).fill(0));
 
-    const [rowsA, setRowsA] = useState(2);
-    const [colsA, setColsA] = useState(2);
-    const [rowsB, setRowsB] = useState(2);
-    const [colsB, setColsB] = useState(2);
+    const [rows, setRows] = useState(2);
+    const [cols, setCols] = useState(2);
 
     const [matrixA, setMatrixA] = useState<Matrix>(createEmptyMatrix(2, 2));
     const [matrixB, setMatrixB] = useState<Matrix>(createEmptyMatrix(2, 2));
@@ -69,36 +67,23 @@ export default function MatrixTab() {
     const [unaryOpTarget, setUnaryOpTarget] = useState<UnaryOperationTarget>('A');
 
 
-    const handleSizeChangeA = (dimension: 'rows' | 'cols', valueStr: string) => {
+    const handleSizeChange = (dimension: 'rows' | 'cols', valueStr: string) => {
         const value = parseInt(valueStr, 10);
-        let newRows = rowsA, newCols = colsA;
+        let newRows = rows, newCols = cols;
         if (dimension === 'rows') {
             newRows = value;
-            setRowsA(value);
+            setRows(value);
         } else {
             newCols = value;
-            setColsA(value);
+            setCols(value);
         }
         setMatrixA(createEmptyMatrix(newRows, newCols));
-        setResult(null);
-    };
-    
-    const handleSizeChangeB = (dimension: 'rows' | 'cols', valueStr: string) => {
-        const value = parseInt(valueStr, 10);
-        let newRows = rowsB, newCols = colsB;
-        if (dimension === 'rows') {
-            newRows = value;
-            setRowsB(value);
-        } else {
-            newCols = value;
-            setColsB(value);
-        }
         setMatrixB(createEmptyMatrix(newRows, newCols));
         setResult(null);
     };
-
-    const isMatrixASquare = rowsA > 0 && rowsA === colsA;
-    const isMatrixBSquare = rowsB > 0 && rowsB === colsB;
+    
+    const isMatrixASquare = rows > 0 && rows === cols;
+    const isMatrixBSquare = rows > 0 && rows === cols;
     const isTargetMatrixSquare = unaryOpTarget === 'A' ? isMatrixASquare : isMatrixBSquare;
 
     const handleOperation = (op: 'add' | 'multiply' | 'determinant' | 'inverse' | 'eigenvalues') => {
@@ -106,15 +91,11 @@ export default function MatrixTab() {
         try {
             switch (op) {
                 case 'add':
-                    if (rowsA !== rowsB || colsA !== colsB) {
-                        toast({ variant: 'destructive', title: 'Error', description: 'Matrices must have the same dimensions for addition.' });
-                        return;
-                    }
                     setResult(addMatrices(matrixA, matrixB));
                     break;
                 case 'multiply':
-                    if (colsA !== rowsB) {
-                        toast({ variant: 'destructive', title: 'Error', description: "For multiplication, Matrix A's columns must equal Matrix B's rows." });
+                    if (cols !== rows) {
+                        toast({ variant: 'destructive', title: 'Error', description: "For multiplication of matrices of the same size, they must be square." });
                         return;
                     }
                     setResult(multiplyMatrices(matrixA, matrixB));
@@ -147,22 +128,19 @@ export default function MatrixTab() {
             <div className="text-center">
                  <h3 className="text-2xl font-semibold">Matrix Operations</h3>
             </div>
+            
+            <div className="flex justify-center gap-4">
+               <SizeSelector label="Rows" value={rows} onChange={(v) => handleSizeChange('rows', v)} />
+               <SizeSelector label="Cols" value={cols} onChange={(v) => handleSizeChange('cols', v)} />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
-                    <h4 className="font-medium text-lg">Matrix A</h4>
-                    <div className="flex gap-4">
-                       <SizeSelector label="Rows" value={rowsA} onChange={(v) => handleSizeChangeA('rows', v)} />
-                       <SizeSelector label="Cols" value={colsA} onChange={(v) => handleSizeChangeA('cols', v)} />
-                    </div>
+                    <h4 className="font-medium text-lg text-center">Matrix A</h4>
                     <MatrixInput matrix={matrixA} setMatrix={setMatrixA} />
                 </div>
                 <div className="space-y-4">
-                    <h4 className="font-medium text-lg">Matrix B</h4>
-                    <div className="flex gap-4">
-                       <SizeSelector label="Rows" value={rowsB} onChange={(v) => handleSizeChangeB('rows', v)} />
-                       <SizeSelector label="Cols" value={colsB} onChange={(v) => handleSizeChangeB('cols', v)} />
-                    </div>
+                    <h4 className="font-medium text-lg text-center">Matrix B</h4>
                     <MatrixInput matrix={matrixB} setMatrix={setMatrixB} />
                 </div>
             </div>
@@ -172,7 +150,7 @@ export default function MatrixTab() {
             <div className="space-y-4">
                 <h4 className="font-medium text-center">Operations</h4>
                 <div className="flex justify-center items-center gap-4">
-                     <p className="text-sm font-medium">Target:</p>
+                     <p className="text-sm font-medium">Target for Unary Operations:</p>
                     <RadioGroup value={unaryOpTarget} onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} className="flex gap-4">
                         <div className="flex items-center space-x-2">
                            <RadioGroupItem value="A" id="r_a" />
