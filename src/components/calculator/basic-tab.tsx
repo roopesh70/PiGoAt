@@ -1,7 +1,7 @@
-
 "use client";
 
 import { useState } from 'react';
+import { Display } from './display';
 
 const CalculatorButton = ({
   onClick,
@@ -25,13 +25,15 @@ export default function BasicTab() {
   const [firstOperand, setFirstOperand] = useState<number | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
   const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
+  const [expression, setExpression] = useState('');
 
   const inputDigit = (digit: string) => {
     if (waitingForSecondOperand) {
       setDisplay(digit);
       setWaitingForSecondOperand(false);
     } else {
-      setDisplay(display === '0' ? digit : display + digit);
+      const newDisplay = display === '0' ? digit : display + digit;
+      setDisplay(newDisplay);
     }
   };
 
@@ -49,9 +51,11 @@ export default function BasicTab() {
     setFirstOperand(null);
     setOperator(null);
     setWaitingForSecondOperand(false);
+    setExpression('');
   };
   
   const backspace = () => {
+    if (waitingForSecondOperand) return;
     setDisplay(display.slice(0, -1) || '0');
   }
   
@@ -60,7 +64,10 @@ export default function BasicTab() {
   }
   
   const percentage = () => {
-      setDisplay(String(parseFloat(display) / 100));
+      const value = parseFloat(display) / 100;
+      setDisplay(String(value));
+      setExpression(`${display} / 100 = ${value}`);
+      setWaitingForSecondOperand(true);
   }
 
   const performOperation = (nextOperator: string) => {
@@ -68,6 +75,7 @@ export default function BasicTab() {
 
     if (operator && waitingForSecondOperand) {
       setOperator(nextOperator);
+      setExpression(`${firstOperand} ${nextOperator}`);
       return;
     }
 
@@ -77,19 +85,29 @@ export default function BasicTab() {
       const result = calculate(firstOperand, inputValue, operator);
       setDisplay(String(result));
       setFirstOperand(result);
+      setExpression(`${firstOperand} ${operator} ${inputValue} = ${result}`);
+    } else {
+        setExpression(`${inputValue} ${nextOperator}`);
     }
     
     setWaitingForSecondOperand(true);
     setOperator(nextOperator);
+    if(firstOperand !== null) {
+        setExpression(`${firstOperand} ${nextOperator}`);
+    } else {
+        setExpression(`${inputValue} ${nextOperator}`);
+    }
   };
   
   const handleEquals = () => {
     if (operator && firstOperand !== null) {
-      const result = calculate(firstOperand, parseFloat(display), operator);
+      const inputValue = parseFloat(display);
+      const result = calculate(firstOperand, inputValue, operator);
       setDisplay(String(result));
-      setFirstOperand(result); // Allow for chaining operations after equals
-      setWaitingForSecondOperand(true);
+      setExpression(`${firstOperand} ${operator} ${inputValue} = ${result}`);
+      setFirstOperand(null); // Reset for new calculation
       setOperator(null);
+      setWaitingForSecondOperand(true);
     }
   };
 
@@ -98,7 +116,7 @@ export default function BasicTab() {
       case '+': return first + second;
       case '-': return first - second;
       case '*': return first * second;
-      case '/': return second === 0 ? NaN : first / second; // Handle division by zero
+      case '/': return second === 0 ? NaN : first / second;
       default: return second;
     }
   };
@@ -110,10 +128,8 @@ export default function BasicTab() {
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
-       <div className="bg-muted/50 p-4 rounded-lg text-right h-20 flex items-center justify-end">
-        <p className="text-4xl font-mono font-light break-all">{getDisplayValue()}</p>
-      </div>
-      <div className="grid grid-cols-4 gap-2">
+       <Display value={getDisplayValue()} expression={expression} />
+       <div className="grid grid-cols-4 gap-2">
         <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={percentage} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -131,7 +147,7 @@ export default function BasicTab() {
         <CalculatorButton onClick={() => inputDigit('0')} label="0" className="col-span-2 bg-card hover:bg-muted" />
         <CalculatorButton onClick={inputDecimal} label="." className="bg-card hover:bg-muted" />
         <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
-      </div>
+       </div>
     </div>
   );
 }
