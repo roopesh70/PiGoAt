@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -35,7 +36,10 @@ export default function BasicTab() {
   };
 
   const inputDecimal = () => {
-    if (!display.includes('.')) {
+    if (waitingForSecondOperand) {
+        setDisplay('0.');
+        setWaitingForSecondOperand(false);
+    } else if (!display.includes('.')) {
       setDisplay(display + '.');
     }
   };
@@ -50,9 +54,22 @@ export default function BasicTab() {
   const backspace = () => {
     setDisplay(display.slice(0, -1) || '0');
   }
+  
+  const toggleSign = () => {
+      setDisplay(String(parseFloat(display) * -1));
+  }
+  
+  const percentage = () => {
+      setDisplay(String(parseFloat(display) / 100));
+  }
 
   const performOperation = (nextOperator: string) => {
     const inputValue = parseFloat(display);
+
+    if (operator && waitingForSecondOperand) {
+      setOperator(nextOperator);
+      return;
+    }
 
     if (firstOperand === null) {
       setFirstOperand(inputValue);
@@ -70,9 +87,9 @@ export default function BasicTab() {
     if (operator && firstOperand !== null) {
       const result = calculate(firstOperand, parseFloat(display), operator);
       setDisplay(String(result));
-      setFirstOperand(null);
+      setFirstOperand(result); // Allow for chaining operations after equals
+      setWaitingForSecondOperand(true);
       setOperator(null);
-      setWaitingForSecondOperand(false);
     }
   };
 
@@ -81,20 +98,25 @@ export default function BasicTab() {
       case '+': return first + second;
       case '-': return first - second;
       case '*': return first * second;
-      case '/': return first / second;
+      case '/': return second === 0 ? NaN : first / second; // Handle division by zero
       default: return second;
     }
   };
+  
+  const getDisplayValue = () => {
+      if (isNaN(parseFloat(display))) return "Error";
+      return display;
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
        <div className="bg-muted/50 p-4 rounded-lg text-right h-20 flex items-center justify-end">
-        <p className="text-4xl font-mono font-light break-all">{display}</p>
+        <p className="text-4xl font-mono font-light break-all">{getDisplayValue()}</p>
       </div>
       <div className="grid grid-cols-4 gap-2">
         <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={percentage} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => performOperation('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
         
         {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
