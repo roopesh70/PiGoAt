@@ -160,12 +160,10 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={() => { setExpression(prev => `(${prev})^2`); setDisplay(`(${expression})^2`);}} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <div className="col-span-2">
-                    <CalculatorButton onClick={() => handleInput('0')} label="0" className="w-full bg-card hover:bg-muted" />
-                </div>
-                <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => { setExpression(prev => `1/(${prev})`); setDisplay(`1/(${expression})`);}} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={handleEquals} label="=" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary/90" />
+                <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={handleEquals} label="=" className="col-span-3 bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
   );
