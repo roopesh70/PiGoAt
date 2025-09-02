@@ -28,7 +28,7 @@ export default function Home() {
             <TabsTrigger value="basic"><Calculator className="w-4 h-4 mr-2"/>Basic</TabsTrigger>
             <TabsTrigger value="scientific"><Sigma className="w-4 h-4 mr-2"/>Scientific</TabsTrigger>
             <TabsTrigger value="matrix"><Variable className="w-4 h-4 mr-2"/>Matrix</TabsTrigger>
-            <TabsTrigger value="polynomial"><FunctionSquare className="w-5 h-5 mr-2"/>Polynomial</TabsTrigger>
+            <TabsTrigger value="polynomial"><FunctionSquare className="w-4 h-4 mr-2"/>Polynomial</TabsTrigger>
             <TabsTrigger value="ai"><BrainCircuit className="w-4 h-4 mr-2"/>AI</TabsTrigger>
             <TabsTrigger value="smart"><Bot className="w-4 h-4 mr-2"/>Smart</TabsTrigger>
           </TabsList>
