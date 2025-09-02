@@ -8,7 +8,7 @@ import BasicTab from "@/components/calculator/basic-tab";
 import ScientificTab from "@/components/calculator/scientific-tab";
 import MatrixTab from "@/components/calculator/matrix-tab";
 import PolynomialTab from "@/components/calculator/polynomial-tab";
-import { BrainCircuit, Calculator, Sigma, FunctionSquare, Bot, Variable } from "lucide-react";
+import { BrainCircuit, Calculator, Sigma, LineChart, Bot, Variable } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
             <TabsTrigger value="basic"><Calculator className="w-4 h-4 mr-2"/>Basic</TabsTrigger>
             <TabsTrigger value="scientific"><Sigma className="w-4 h-4 mr-2"/>Scientific</TabsTrigger>
             <TabsTrigger value="matrix"><Variable className="w-4 h-4 mr-2"/>Matrix</TabsTrigger>
-            <TabsTrigger value="polynomial"><FunctionSquare className="w-4 h-4 mr-2"/>Polynomial</TabsTrigger>
+            <TabsTrigger value="polynomial"><LineChart className="w-4 h-4 mr-2"/>Polynomial</TabsTrigger>
             <TabsTrigger value="ai"><BrainCircuit className="w-4 h-4 mr-2"/>AI</TabsTrigger>
             <TabsTrigger value="smart"><Bot className="w-4 h-4 mr-2"/>Smart</TabsTrigger>
           </TabsList>
