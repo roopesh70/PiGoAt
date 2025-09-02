@@ -47,6 +47,10 @@ export default function ScientificTab() {
 
   const performOperation = (nextOperator: string) => {
     const inputValue = parseFloat(display);
+    if (operator && waitingForSecondOperand) {
+        setOperator(nextOperator);
+        return;
+    }
     if (firstOperand === null) {
       setFirstOperand(inputValue);
     } else if (operator) {
@@ -64,7 +68,7 @@ export default function ScientificTab() {
       setDisplay(String(result));
       setFirstOperand(null);
       setOperator(null);
-      setWaitingForSecondOperand(false);
+      setWaitingForSecondOperand(true); // Ready for a new calculation
     }
   };
 
@@ -82,30 +86,46 @@ export default function ScientificTab() {
   const handleUnaryOperation = (op: string) => {
     const value = parseFloat(display);
     let result = 0;
-    switch(op) {
-      case 'sin': result = Math.sin(value * Math.PI / 180); break;
-      case 'cos': result = Math.cos(value * Math.PI / 180); break;
-      case 'tan': result = Math.tan(value * Math.PI / 180); break;
-      case 'sinh': result = Math.sinh(value); break;
-      case 'cosh': result = Math.cosh(value); break;
-      case 'tanh': result = Math.tanh(value); break;
-      case 'ln': result = Math.log(value); break;
-      case 'log': result = Math.log10(value); break;
-      case 'sqrt': result = Math.sqrt(value); break;
-      case 'x!':
-        if (value < 0 || !Number.isInteger(value)) {
-            setDisplay("Error"); return;
+    try {
+        switch(op) {
+          case 'sin': result = Math.sin(value * Math.PI / 180); break;
+          case 'cos': result = Math.cos(value * Math.PI / 180); break;
+          case 'tan': result = Math.tan(value * Math.PI / 180); break;
+          case 'sinh': result = Math.sinh(value); break;
+          case 'cosh': result = Math.cosh(value); break;
+          case 'tanh': result = Math.tanh(value); break;
+          case 'ln': result = Math.log(value); break;
+          case 'log': result = Math.log10(value); break;
+          case 'sqrt': result = Math.sqrt(value); break;
+          case 'x!':
+            if (value < 0 || !Number.isInteger(value)) {
+                setDisplay("Error"); return;
+            }
+            if (value > 170) {
+                setDisplay("Infinity"); return;
+            }
+            let fact = 1;
+            for (let i = 2; i <= value; i++) fact *= i;
+            result = fact;
+            break;
+          case 'e^x': result = Math.exp(value); break;
+          case '1/x': 
+            if (value === 0) {
+                setDisplay("Error"); return;
+            }
+            result = 1 / value; break;
+          case 'x^2': result = Math.pow(value, 2); break;
+          case 'x^3': result = Math.pow(value, 3); break;
         }
-        let fact = 1;
-        for (let i = 2; i <= value; i++) fact *= i;
-        result = fact;
-        break;
-      case 'e^x': result = Math.exp(value); break;
-      case '1/x': result = 1 / value; break;
-      case 'x^2': result = Math.pow(value, 2); break;
-      case 'x^3': result = Math.pow(value, 3); break;
+        if (isNaN(result) || !isFinite(result)) {
+            setDisplay("Error");
+        } else {
+            setDisplay(String(result));
+        }
+    } catch {
+        setDisplay("Error");
     }
-    setDisplay(String(result));
+    setWaitingForSecondOperand(true);
   };
 
 
