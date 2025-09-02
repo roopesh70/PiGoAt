@@ -20,6 +20,12 @@ const UNIT_CONVERSIONS: { [key: string]: { factor: number, to: string } } = {
     // Temperature
     'c_f': { factor: 0, to: 'F' }, // special case
     'f_c': { factor: 0, to: 'C' }, // special case
+    // Energy
+    'kcal_kj': { factor: 4.184, to: 'kJ' },
+    'kj_kcal': { factor: 1 / 4.184, to: 'kcal' },
+    // Power
+    'hp_watts': { factor: 745.7, to: 'watts' },
+    'watts_hp': { factor: 1 / 745.7, to: 'hp' },
 };
 
 export function parseSmartQuery(query: string): string {
@@ -45,7 +51,7 @@ export function parseSmartQuery(query: string): string {
     const unitMatch = query.match(/^(\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|in)\s*([a-zA-Z]+)$/);
     if (unitMatch) {
         const amount = parseFloat(unitMatch[1]);
-        const fromUnit = unitMatch[3];
+        const fromUnit = unitMatch[3].replace(/s$/, ''); // remove plural s
         const toUnit = unitMatch[5].replace(/s$/, ''); // remove plural s
         const key = `${fromUnit}_${toUnit}`;
         

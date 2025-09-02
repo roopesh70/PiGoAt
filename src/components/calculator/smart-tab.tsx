@@ -48,6 +48,8 @@ export default function SmartTab() {
         '5 km to miles',
         '10 kg to lbs',
         '30 C to F',
+        '2500 kcal to kj',
+        '150 hp to watts'
     ];
 
     return (
