@@ -11,7 +11,7 @@ import { Separator } from '../ui/separator';
 
 type Matrix = number[][];
 
-const MatrixInput = ({ matrix, setMatrix, size }: { matrix: Matrix, setMatrix: (m: Matrix) => void, size: number }) => {
+const MatrixInput = ({ matrix, setMatrix }: { matrix: Matrix, setMatrix: (m: Matrix) => void }) => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, r: number, c: number) => {
         const newMatrix = matrix.map(row => [...row]);
         newMatrix[r][c] = parseFloat(e.target.value) || 0;
@@ -91,6 +91,8 @@ export default function MatrixTab() {
                         <SelectContent>
                             <SelectItem value="2">2x2</SelectItem>
                             <SelectItem value="3">3x3</SelectItem>
+                            <SelectItem value="4">4x4</SelectItem>
+                            <SelectItem value="5">5x5</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -99,11 +101,11 @@ export default function MatrixTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div>
                     <h4 className="font-medium mb-2">Matrix A</h4>
-                    <MatrixInput matrix={matrixA} setMatrix={setMatrixA} size={size} />
+                    <MatrixInput matrix={matrixA} setMatrix={setMatrixA} />
                 </div>
                 <div>
                     <h4 className="font-medium mb-2">Matrix B</h4>
-                    <MatrixInput matrix={matrixB} setMatrix={setMatrixB} size={size} />
+                    <MatrixInput matrix={matrixB} setMatrix={setMatrixB} />
                 </div>
             </div>
             

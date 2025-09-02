@@ -46,6 +46,10 @@ export default function BasicTab() {
     setOperator(null);
     setWaitingForSecondOperand(false);
   };
+  
+  const backspace = () => {
+    setDisplay(display.slice(0, -1) || '0');
+  }
 
   const performOperation = (nextOperator: string) => {
     const inputValue = parseFloat(display);
@@ -88,8 +92,9 @@ export default function BasicTab() {
         <p className="text-4xl font-mono font-light break-all">{display}</p>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        <CalculatorButton onClick={clearDisplay} label="AC" className="col-span-2 bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => performOperation('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
         
         {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}

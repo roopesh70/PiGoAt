@@ -19,14 +19,14 @@ export default function Home() {
           <p className="text-muted-foreground mt-2">The intelligent calculator for every need.</p>
         </header>
 
-        <Tabs defaultValue="ai" className="w-full">
+        <Tabs defaultValue="basic" className="w-full">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
-            <TabsTrigger value="ai"><BrainCircuit className="w-4 h-4 mr-2"/>AI</TabsTrigger>
-            <TabsTrigger value="smart"><Bot className="w-4 h-4 mr-2"/>Smart</TabsTrigger>
             <TabsTrigger value="basic"><Calculator className="w-4 h-4 mr-2"/>Basic</TabsTrigger>
             <TabsTrigger value="scientific"><Sigma className="w-4 h-4 mr-2"/>Scientific</TabsTrigger>
             <TabsTrigger value="matrix"><Variable className="w-4 h-4 mr-2"/>Matrix</TabsTrigger>
             <TabsTrigger value="polynomial"><FunctionSquare className="w-4 h-4 mr-2"/>Polynomial</TabsTrigger>
+            <TabsTrigger value="ai"><BrainCircuit className="w-4 h-4 mr-2"/>AI</TabsTrigger>
+            <TabsTrigger value="smart"><Bot className="w-4 h-4 mr-2"/>Smart</TabsTrigger>
           </TabsList>
           
           <Card className="mt-4 shadow-xl">
