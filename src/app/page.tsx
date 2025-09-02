@@ -24,19 +24,19 @@ export default function Home() {
             <TabsTrigger value="basic"><Calculator className="w-4 h-4 mr-2"/>Basic</TabsTrigger>
             <TabsTrigger value="scientific"><Sigma className="w-4 h-4 mr-2"/>Scientific</TabsTrigger>
             <TabsTrigger value="matrix"><Variable className="w-4 h-4 mr-2"/>Matrix</TabsTrigger>
-            <TabsTrigger value="polynomial"><FunctionSquare className="w-4 h-4 mr-2"/>Polynomial</TabsTrigger>
+            <TabsTrigger value="polynomial"><FunctionSquare className="w-4 h-4 mr-2 inline-block"/>Polynomial</TabsTrigger>
             <TabsTrigger value="ai"><BrainCircuit className="w-4 h-4 mr-2"/>AI</TabsTrigger>
             <TabsTrigger value="smart"><Bot className="w-4 h-4 mr-2"/>Smart</TabsTrigger>
           </TabsList>
           
           <Card className="mt-4 shadow-xl">
             <CardContent className="p-4 sm:p-6">
-              <TabsContent value="ai"><AiTab /></TabsContent>
-              <TabsContent value="smart"><SmartTab /></TabsContent>
               <TabsContent value="basic"><BasicTab /></TabsContent>
               <TabsContent value="scientific"><ScientificTab /></TabsContent>
               <TabsContent value="matrix"><MatrixTab /></TabsContent>
               <TabsContent value="polynomial"><PolynomialTab /></TabsContent>
+              <TabsContent value="ai"><AiTab /></TabsContent>
+              <TabsContent value="smart"><SmartTab /></TabsContent>
             </CardContent>
           </Card>
         </Tabs>

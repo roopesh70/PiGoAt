@@ -55,10 +55,31 @@ export function solveQuadratic(a: number, b: number, c: number): string {
     }
 }
 
-export function getDerivative(a: number, b: number): { a: number, b: number } {
-    return { a: 2 * a, b: b };
+export function getDerivative(coeffs: number[]): number[] {
+    if (coeffs.length <= 1) return [0];
+    const degree = coeffs.length - 1;
+    return coeffs.slice(0, -1).map((c, i) => c * (degree - i));
 }
 
-export function getIntegral(a: number, b: number, c: number): { a: number, b: number, c: number } {
-    return { a: a / 3, b: b / 2, c: c };
+export function getIntegral(coeffs: number[]): number[] {
+    const degree = coeffs.length - 1;
+    return coeffs.map((c, i) => c / (degree - i + 1));
+}
+
+export function evaluatePolynomial(coeffs: number[], x: number): number {
+    return coeffs.reduce((acc, c) => acc * x + c, 0);
+};
+
+export function formatPolynomial(coeffs: number[]): string {
+    const degree = coeffs.length - 1;
+    return coeffs.map((c, i) => {
+        const power = degree - i;
+        if (c === 0) return '';
+        const coeffStr = Math.abs(c) === 1 && power !== 0 ? '' : `${c.toFixed(2).replace(/\.00$/, '')}`;
+        const xStr = power > 1 ? `x^${power}` : power === 1 ? 'x' : '';
+        const sign = c > 0 ? ' + ' : ' - ';
+        const term = `${Math.abs(c) === 1 && power !== 0 ? '' : Math.abs(c).toFixed(2).replace(/\.00$/, '')}${xStr}`;
+        if (i === 0) return `${c < 0 ? '-' : ''}${term}`;
+        return `${sign}${term}`;
+    }).join('').replace(/^\s\+\s/, '').replace(/(\s\+\s|\s\-\s)$/, '').trim() || '0';
 }
