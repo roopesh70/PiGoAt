@@ -149,18 +149,20 @@ export default function MatrixTab() {
 
             <div className="space-y-4">
                 <h4 className="font-medium text-center">Operations</h4>
-                <div className="flex justify-center items-center gap-4">
-                     <p className="text-sm font-medium">Target for Unary Operations:</p>
-                    <RadioGroup value={unaryOpTarget} onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                           <RadioGroupItem value="A" id="r_a" />
-                           <Label htmlFor="r_a">Matrix A</Label>
-                        </div>
-                         <div className="flex items-center space-x-2">
-                           <RadioGroupItem value="B" id="r_b" />
-                           <Label htmlFor="r_b">Matrix B</Label>
-                        </div>
-                    </RadioGroup>
+                <div className="flex justify-center">
+                    <div className="p-3 border rounded-lg bg-muted/50 flex items-center gap-4">
+                        <p className="text-sm font-medium">Target for Unary Ops:</p>
+                        <RadioGroup value={unaryOpTarget} onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} className="flex gap-4">
+                            <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="A" id="r_a" />
+                            <Label htmlFor="r_a">Matrix A</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="B" id="r_b" />
+                            <Label htmlFor="r_b">Matrix B</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
                 </div>
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     <Button onClick={() => handleOperation('add')}>A + B</Button>
