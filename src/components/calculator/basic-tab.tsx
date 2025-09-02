@@ -33,7 +33,7 @@ export default function BasicTab() {
       setWaitingForSecondOperand(false);
     } else {
       const newDisplay = display === '0' ? digit : display + digit;
-      setDisplay(newDisplay);
+      setDisplay(newDisplay.length > 15 ? display : newDisplay);
     }
   };
 
@@ -54,20 +54,14 @@ export default function BasicTab() {
     setExpression('');
   };
   
-  const backspace = () => {
-    if (waitingForSecondOperand) return;
-    setDisplay(display.slice(0, -1) || '0');
-  }
-  
   const toggleSign = () => {
       setDisplay(String(parseFloat(display) * -1));
   }
   
   const percentage = () => {
       const value = parseFloat(display) / 100;
-      setDisplay(String(value));
-      setExpression(`${display} / 100 = ${value}`);
-      setWaitingForSecondOperand(true);
+      const cleanValue = String(Number(value.toPrecision(10)))
+      setDisplay(cleanValue);
   }
 
   const performOperation = (nextOperator: string) => {
@@ -83,12 +77,11 @@ export default function BasicTab() {
       setFirstOperand(inputValue);
     } else if (operator) {
       const result = calculate(firstOperand, inputValue, operator);
-      setDisplay(String(result));
+      const resultStr = String(Number(result.toPrecision(10)));
+      setDisplay(resultStr);
       setFirstOperand(result);
-      setExpression(`${firstOperand} ${operator} ${inputValue} = ${result}`);
-    } else {
-        setExpression(`${inputValue} ${nextOperator}`);
-    }
+      setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
+    } 
     
     setWaitingForSecondOperand(true);
     setOperator(nextOperator);
@@ -103,9 +96,10 @@ export default function BasicTab() {
     if (operator && firstOperand !== null) {
       const inputValue = parseFloat(display);
       const result = calculate(firstOperand, inputValue, operator);
-      setDisplay(String(result));
-      setExpression(`${firstOperand} ${operator} ${inputValue} = ${result}`);
-      setFirstOperand(null); // Reset for new calculation
+      const resultStr = String(Number(result.toPrecision(10)));
+      setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
+      setDisplay(resultStr);
+      setFirstOperand(null); 
       setOperator(null);
       setWaitingForSecondOperand(true);
     }

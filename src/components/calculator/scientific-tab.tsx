@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { Display } from './display';
 
 const CalculatorButton = ({
   onClick,
@@ -22,6 +23,7 @@ const CalculatorButton = ({
 
 export default function ScientificTab() {
     const [display, setDisplay] = useState('0');
+    const [expression, setExpression] = useState('');
     const [firstOperand, setFirstOperand] = useState<number | null>(null);
     const [operator, setOperator] = useState<string | null>(null);
     const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
@@ -40,17 +42,15 @@ export default function ScientificTab() {
 
     const clear = () => {
         setDisplay('0');
+        setExpression('');
         setFirstOperand(null);
         setOperator(null);
         setWaitingForSecondOperand(false);
     };
 
     const backspace = () => {
-        if (display.length > 1) {
-            setDisplay(display.slice(0, -1));
-        } else {
-            setDisplay('0');
-        }
+        if (waitingForSecondOperand) return;
+        setDisplay(display.slice(0, -1) || '0');
     };
 
     const inputDigit = (digit: string) => {
@@ -58,14 +58,8 @@ export default function ScientificTab() {
             setDisplay(digit);
             setWaitingForSecondOperand(false);
         } else {
-            if (display === '0' && digit !== '.') {
-                setDisplay(digit);
-            } else if (digit === '.' && display.includes('.')) {
-                return;
-            } 
-            else {
-                setDisplay(`${display}${digit}`);
-            }
+            const newDisplay = display === '0' ? digit : display + digit;
+            setDisplay(newDisplay.length > 15 ? display : newDisplay);
         }
     };
 
@@ -74,6 +68,7 @@ export default function ScientificTab() {
 
         if (operator && waitingForSecondOperand) {
             setOperator(nextOperator);
+            setExpression(`${firstOperand} ${nextOperator}`);
             return;
         }
 
@@ -81,20 +76,28 @@ export default function ScientificTab() {
             setFirstOperand(inputValue);
         } else if (operator) {
             const result = calculate(firstOperand, inputValue, operator);
-            const resultStr = String(result);
+            const resultStr = String(Number(result.toPrecision(10)));
             setDisplay(resultStr);
             setFirstOperand(result);
+            setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
         }
         
         setWaitingForSecondOperand(true);
         setOperator(nextOperator);
+        if(firstOperand !== null) {
+            setExpression(`${firstOperand} ${nextOperator}`);
+        } else {
+            setExpression(`${inputValue} ${nextOperator}`);
+        }
     };
 
     const handleEquals = () => {
         if (!operator || firstOperand === null) return;
         const inputValue = parseFloat(display);
         const result = calculate(firstOperand, inputValue, operator);
-        setDisplay(String(result));
+        const resultStr = String(Number(result.toPrecision(10)));
+        setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
+        setDisplay(resultStr);
         setFirstOperand(null);
         setOperator(null);
         setWaitingForSecondOperand(false);
@@ -103,17 +106,18 @@ export default function ScientificTab() {
     const handleUnaryOperation = (op: string) => {
         const value = parseFloat(display);
         let result = 0;
+        let opSymbol = op;
         try {
             switch(op) {
-              case 'sin': result = Math.sin(value * Math.PI / 180); break;
-              case 'cos': result = Math.cos(value * Math.PI / 180); break;
-              case 'tan': result = Math.tan(value * Math.PI / 180); break;
+              case 'sin': result = Math.sin(value * Math.PI / 180); opSymbol = "sin_deg"; break;
+              case 'cos': result = Math.cos(value * Math.PI / 180); opSymbol = "cos_deg"; break;
+              case 'tan': result = Math.tan(value * Math.PI / 180); opSymbol = "tan_deg"; break;
               case 'sinh': result = Math.sinh(value); break;
               case 'cosh': result = Math.cosh(value); break;
               case 'tanh': result = Math.tanh(value); break;
               case 'ln': result = Math.log(value); break;
               case 'log': result = Math.log10(value); break;
-              case 'sqrt': result = Math.sqrt(value); break;
+              case 'sqrt': result = Math.sqrt(value); opSymbol = "√"; break;
               case 'x!':
                 if (value < 0 || !Number.isInteger(value)) {
                     setDisplay("Error"); setWaitingForSecondOperand(true); return;
@@ -125,31 +129,36 @@ export default function ScientificTab() {
                 for (let i = 2; i <= value; i++) fact *= i;
                 result = fact;
                 break;
-              case 'e^x': result = Math.exp(value); break;
+              case 'e^x': result = Math.exp(value); opSymbol = "e^"; break;
               case '1/x': 
                 if (value === 0) {
                     setDisplay("Error"); setWaitingForSecondOperand(true); return;
                 }
                 result = 1 / value; break;
-              case 'x^2': result = Math.pow(value, 2); break;
-              case 'x^3': result = Math.pow(value, 3); break;
+              case 'x^2': result = Math.pow(value, 2); opSymbol = "sqr"; break;
+              case 'x^3': result = Math.pow(value, 3); opSymbol = "cube"; break;
             }
             if (isNaN(result) || !isFinite(result)) {
                 setDisplay("Error");
             } else {
-                setDisplay(String(result));
+                 const resultStr = String(Number(result.toPrecision(10)));
+                 setExpression(`${opSymbol}(${value}) = ${resultStr}`);
+                 setDisplay(resultStr);
             }
         } catch {
             setDisplay("Error");
         }
         setWaitingForSecondOperand(true);
       };
+      
+    const getDisplayValue = () => {
+        if (isNaN(parseFloat(display))) return "Error";
+        return display;
+    }
 
     return (
         <div className="w-full max-w-md mx-auto space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg text-right h-20 flex items-center justify-end">
-                <p className="text-4xl font-mono font-light break-all">{display}</p>
-            </div>
+            <Display value={getDisplayValue()} expression={expression} />
             <div className="grid grid-cols-6 gap-2">
                 <CalculatorButton onClick={() => handleUnaryOperation('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleUnaryOperation('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -180,8 +189,8 @@ export default function ScientificTab() {
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => chooseOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => { setDisplay(String(Math.PI)); setWaitingForSecondOperand(false); }} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => { setDisplay(String(Math.E)); setWaitingForSecondOperand(false); }} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => { setDisplay(String(Math.PI)); setWaitingForSecondOperand(true); }} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => { setDisplay(String(Math.E)); setWaitingForSecondOperand(true); }} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => inputDigit('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => inputDigit('.')} label="." className="bg-card hover:bg-muted" />
