@@ -22,123 +22,110 @@ const CalculatorButton = ({
 
 export default function BasicTab() {
   const [display, setDisplay] = useState('0');
-  const [firstOperand, setFirstOperand] = useState<number | null>(null);
-  const [operator, setOperator] = useState<string | null>(null);
-  const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
   const [expression, setExpression] = useState('');
+  const [isResult, setIsResult] = useState(false);
 
-  const inputDigit = (digit: string) => {
-    if (waitingForSecondOperand) {
-      setDisplay(digit);
-      setWaitingForSecondOperand(false);
-    } else {
-      const newDisplay = display === '0' ? digit : display + digit;
-      setDisplay(newDisplay.length > 15 ? display : newDisplay);
+  const evaluateExpression = (exp: string): string => {
+    try {
+      // Replace visual operators with evaluatable ones
+      const evaluatableExpression = exp.replace(/×/g, '*').replace(/÷/g, '/');
+      // Basic safeguard
+      if (/[^0-9+\-*/.%() ]/.test(evaluatableExpression)) {
+        return "Error";
+      }
+      // Using Function constructor for safe evaluation
+      const result = new Function(`return ${evaluatableExpression}`)();
+       if (isNaN(result) || !isFinite(result)) return "Error";
+      return String(Number(result.toPrecision(10)));
+    } catch (error) {
+      return "Error";
     }
   };
 
-  const inputDecimal = () => {
-    if (waitingForSecondOperand) {
-        setDisplay('0.');
-        setWaitingForSecondOperand(false);
-    } else if (!display.includes('.')) {
-      setDisplay(display + '.');
+  const handleInput = (char: string) => {
+    if (isResult) {
+      setExpression(char);
+      setDisplay(char);
+      setIsResult(false);
+    } else {
+      setExpression(prev => (prev === '0' && char !== '.') ? char : prev + char);
+      setDisplay(prev => (prev === '0' && char !== '.') ? char : prev + char);
+    }
+  };
+
+  const handleOperator = (op: string) => {
+     if (expression.slice(-1) === ' ') return; // Prevent multiple operators
+     setExpression(prev => prev + ` ${op} `);
+     setDisplay(op);
+     setIsResult(false);
+  }
+
+  const handleEquals = () => {
+    if (expression) {
+        const finalExpression = expression.replace(/(\s[+\-×÷]\s)$/, ''); // Remove trailing operator
+        const result = evaluateExpression(finalExpression);
+        setDisplay(result);
+        setExpression(result);
+        setIsResult(true);
     }
   };
 
   const clearDisplay = () => {
     setDisplay('0');
-    setFirstOperand(null);
-    setOperator(null);
-    setWaitingForSecondOperand(false);
     setExpression('');
+    setIsResult(false);
   };
   
   const toggleSign = () => {
-      setDisplay(String(parseFloat(display) * -1));
+     if (display !== '0' && !isResult) {
+       const currentNumberMatch = expression.match(/(\d+\.?\d*)$/);
+       if (currentNumberMatch) {
+           const currentNumber = currentNumberMatch[0];
+           const newNumber = String(parseFloat(currentNumber) * -1);
+           setExpression(prev => prev.slice(0, -currentNumber.length) + `(${newNumber})`);
+           setDisplay(newNumber);
+       }
+     }
   }
   
   const percentage = () => {
+    if (!isResult && display !== '0') {
       const value = parseFloat(display) / 100;
-      const cleanValue = String(Number(value.toPrecision(10)))
-      setDisplay(cleanValue);
+      const cleanValue = String(Number(value.toPrecision(10)));
+       const currentNumberMatch = expression.match(/(\d+\.?\d*)$/);
+       if (currentNumberMatch) {
+            const currentNumber = currentNumberMatch[0];
+            setExpression(prev => prev.slice(0, -currentNumber.length) + cleanValue);
+       }
+       setDisplay(cleanValue);
+    }
   }
-
-  const performOperation = (nextOperator: string) => {
-    const inputValue = parseFloat(display);
-
-    if (operator && waitingForSecondOperand) {
-      setOperator(nextOperator);
-      setExpression(`${firstOperand} ${nextOperator}`);
-      return;
-    }
-
-    if (firstOperand === null) {
-      setFirstOperand(inputValue);
-    } else if (operator) {
-      const result = calculate(firstOperand, inputValue, operator);
-      const resultStr = String(Number(result.toPrecision(10)));
-      setDisplay(resultStr);
-      setFirstOperand(result);
-      setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
-    } 
-    
-    setWaitingForSecondOperand(true);
-    setOperator(nextOperator);
-    if(firstOperand !== null) {
-        setExpression(`${firstOperand} ${nextOperator}`);
-    } else {
-        setExpression(`${inputValue} ${nextOperator}`);
-    }
-  };
   
-  const handleEquals = () => {
-    if (operator && firstOperand !== null) {
-      const inputValue = parseFloat(display);
-      const result = calculate(firstOperand, inputValue, operator);
-      const resultStr = String(Number(result.toPrecision(10)));
-      setExpression(`${firstOperand} ${operator} ${inputValue} = ${resultStr}`);
-      setDisplay(resultStr);
-      setFirstOperand(null); 
-      setOperator(null);
-      setWaitingForSecondOperand(true);
-    }
-  };
-
-  const calculate = (first: number, second: number, op: string): number => {
-    switch (op) {
-      case '+': return first + second;
-      case '-': return first - second;
-      case '*': return first * second;
-      case '/': return second === 0 ? NaN : first / second;
-      default: return second;
-    }
-  };
-  
-  const getDisplayValue = () => {
-      if (isNaN(parseFloat(display))) return "Error";
-      return display;
+  const inputDecimal = () => {
+      if (!display.includes('.')) {
+          handleInput('.');
+      }
   }
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
-       <Display value={getDisplayValue()} expression={expression} />
+       <Display value={display} expression={isResult ? '' : expression} />
        <div className="grid grid-cols-4 gap-2">
         <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={percentage} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={() => performOperation('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+        <CalculatorButton onClick={() => handleOperator('÷')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
         
-        {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-        <CalculatorButton onClick={() => performOperation('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+        {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+        <CalculatorButton onClick={() => handleOperator('×')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-        {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-        <CalculatorButton onClick={() => performOperation('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+        {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+        <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-        {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => inputDigit(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-        <CalculatorButton onClick={() => performOperation('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+        {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+        <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-        <CalculatorButton onClick={() => inputDigit('0')} label="0" className="col-span-2 bg-card hover:bg-muted" />
+        <CalculatorButton onClick={() => handleInput('0')} label="0" className="col-span-2 bg-card hover:bg-muted" />
         <CalculatorButton onClick={inputDecimal} label="." className="bg-card hover:bg-muted" />
         <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
        </div>
