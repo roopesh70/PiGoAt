@@ -37,33 +37,90 @@ const MatrixInput = ({ matrix, setMatrix }: { matrix: Matrix, setMatrix: (m: Mat
     );
 };
 
-export default function MatrixTab() {
-    const [size, setSize] = useState(2);
-    const createEmptyMatrix = (s: number) => Array.from({ length: s }, () => Array(s).fill(0));
+const SizeSelector = ({ label, value, onChange }: { label: string, value: number, onChange: (v: string) => void }) => (
+    <div className="flex items-center gap-2">
+        <label className="text-sm font-medium">{label}:</label>
+        <Select value={String(value)} onValueChange={onChange}>
+            <SelectTrigger className="w-20">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+            </SelectContent>
+        </Select>
+    </div>
+);
 
-    const [matrixA, setMatrixA] = useState<Matrix>(createEmptyMatrix(2));
-    const [matrixB, setMatrixB] = useState<Matrix>(createEmptyMatrix(2));
+
+export default function MatrixTab() {
+    const createEmptyMatrix = (rows: number, cols: number) => Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    const [rowsA, setRowsA] = useState(2);
+    const [colsA, setColsA] = useState(2);
+    const [rowsB, setRowsB] = useState(2);
+    const [colsB, setColsB] = useState(2);
+
+    const [matrixA, setMatrixA] = useState<Matrix>(createEmptyMatrix(2, 2));
+    const [matrixB, setMatrixB] = useState<Matrix>(createEmptyMatrix(2, 2));
     const [result, setResult] = useState<Matrix | number | null>(null);
 
-    const handleSizeChange = (newSizeStr: string) => {
-        const newSize = parseInt(newSizeStr, 10);
-        setSize(newSize);
-        setMatrixA(createEmptyMatrix(newSize));
-        setMatrixB(createEmptyMatrix(newSize));
+    const handleSizeChangeA = (dimension: 'rows' | 'cols', valueStr: string) => {
+        const value = parseInt(valueStr, 10);
+        let newRows = rowsA, newCols = colsA;
+        if (dimension === 'rows') {
+            newRows = value;
+            setRowsA(value);
+        } else {
+            newCols = value;
+            setColsA(value);
+        }
+        setMatrixA(createEmptyMatrix(newRows, newCols));
         setResult(null);
     };
+    
+    const handleSizeChangeB = (dimension: 'rows' | 'cols', valueStr: string) => {
+        const value = parseInt(valueStr, 10);
+        let newRows = rowsB, newCols = colsB;
+        if (dimension === 'rows') {
+            newRows = value;
+            setRowsB(value);
+        } else {
+            newCols = value;
+            setColsB(value);
+        }
+        setMatrixB(createEmptyMatrix(newRows, newCols));
+        setResult(null);
+    };
+
+    const isMatrixASquare = rowsA === colsA;
 
     const handleOperation = (op: 'add' | 'multiply' | 'determinantA' | 'inverseA' | 'eigenvaluesA') => {
         setResult(null);
         try {
             switch (op) {
                 case 'add':
+                    if (rowsA !== rowsB || colsA !== colsB) {
+                        toast({ variant: 'destructive', title: 'Error', description: 'Matrices must have the same dimensions for addition.' });
+                        return;
+                    }
                     setResult(addMatrices(matrixA, matrixB));
                     break;
                 case 'multiply':
+                    if (colsA !== rowsB) {
+                        toast({ variant: 'destructive', title: 'Error', description: "For multiplication, Matrix A's columns must equal Matrix B's rows." });
+                        return;
+                    }
                     setResult(multiplyMatrices(matrixA, matrixB));
                     break;
                 case 'determinantA':
+                     if (!isMatrixASquare) {
+                        toast({ variant: 'destructive', title: 'Error', description: 'Determinant can only be calculated for square matrices.' });
+                        return;
+                    }
                     setResult(determinant(matrixA));
                     break;
                 case 'inverseA':
@@ -80,31 +137,25 @@ export default function MatrixTab() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold">Matrix Operations</h3>
-                <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Size:</label>
-                    <Select value={String(size)} onValueChange={handleSizeChange}>
-                        <SelectTrigger className="w-24">
-                            <SelectValue placeholder="Size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="2">2x2</SelectItem>
-                            <SelectItem value="3">3x3</SelectItem>
-                            <SelectItem value="4">4x4</SelectItem>
-                            <SelectItem value="5">5x5</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+            <div className="text-center">
+                 <h3 className="text-2xl font-semibold">Matrix Operations</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div>
-                    <h4 className="font-medium mb-2">Matrix A</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div className="space-y-4">
+                    <h4 className="font-medium text-lg">Matrix A</h4>
+                    <div className="flex gap-4">
+                       <SizeSelector label="Rows" value={rowsA} onChange={(v) => handleSizeChangeA('rows', v)} />
+                       <SizeSelector label="Cols" value={colsA} onChange={(v) => handleSizeChangeA('cols', v)} />
+                    </div>
                     <MatrixInput matrix={matrixA} setMatrix={setMatrixA} />
                 </div>
-                <div>
-                    <h4 className="font-medium mb-2">Matrix B</h4>
+                <div className="space-y-4">
+                    <h4 className="font-medium text-lg">Matrix B</h4>
+                    <div className="flex gap-4">
+                       <SizeSelector label="Rows" value={rowsB} onChange={(v) => handleSizeChangeB('rows', v)} />
+                       <SizeSelector label="Cols" value={colsB} onChange={(v) => handleSizeChangeB('cols', v)} />
+                    </div>
                     <MatrixInput matrix={matrixB} setMatrix={setMatrixB} />
                 </div>
             </div>
@@ -116,9 +167,9 @@ export default function MatrixTab() {
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     <Button onClick={() => handleOperation('add')}>A + B</Button>
                     <Button onClick={() => handleOperation('multiply')}>A × B</Button>
-                    <Button onClick={() => handleOperation('determinantA')}>det(A)</Button>
-                    <Button onClick={() => handleOperation('inverseA')}>inv(A)</Button>
-                    <Button onClick={() => handleOperation('eigenvaluesA')}>eig(A)</Button>
+                    <Button onClick={() => handleOperation('determinantA')} disabled={!isMatrixASquare}>det(A)</Button>
+                    <Button onClick={() => handleOperation('inverseA')} disabled={!isMatrixASquare}>inv(A)</Button>
+                    <Button onClick={() => handleOperation('eigenvaluesA')} disabled={!isMatrixASquare}>eig(A)</Button>
                 </div>
             </div>
 
@@ -131,11 +182,11 @@ export default function MatrixTab() {
                         {typeof result === 'number' ? (
                             <p className="text-3xl font-mono font-bold text-primary">{result}</p>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-2 overflow-x-auto">
                                 {result.map((row, r) => (
                                     <div key={r} className="flex gap-2">
                                         {row.map((val, c) => (
-                                            <div key={c} className="w-16 h-10 flex items-center justify-center bg-muted rounded">
+                                            <div key={c} className="w-20 h-10 flex-shrink-0 flex items-center justify-center bg-muted rounded">
                                                 {val.toFixed(2)}
                                             </div>
                                         ))}
