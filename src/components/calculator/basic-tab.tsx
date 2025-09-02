@@ -24,16 +24,14 @@ export default function BasicTab() {
   const [display, setDisplay] = useState('0');
   const [expression, setExpression] = useState('');
   const [isResult, setIsResult] = useState(false);
+  const [currentNumber, setCurrentNumber] = useState('0');
 
   const evaluateExpression = (exp: string): string => {
     try {
-      // Replace visual operators with evaluatable ones
-      const evaluatableExpression = exp.replace(/×/g, '*').replace(/÷/g, '/');
-      // Basic safeguard
+      const evaluatableExpression = exp.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
       if (/[^0-9+\-*/.%() ]/.test(evaluatableExpression)) {
         return "Error";
       }
-      // Using Function constructor for safe evaluation
       const result = new Function(`return ${evaluatableExpression}`)();
        if (isNaN(result) || !isFinite(result)) return "Error";
       return String(Number(result.toPrecision(10)));
@@ -44,28 +42,44 @@ export default function BasicTab() {
 
   const handleInput = (char: string) => {
     if (isResult) {
-      setExpression(char);
+      clearDisplay();
+      setCurrentNumber(char);
       setDisplay(char);
+      setExpression(char);
       setIsResult(false);
-    } else {
-      setExpression(prev => (prev === '0' && char !== '.') ? char : prev + char);
-      setDisplay(prev => (prev === '0' && char !== '.') ? char : prev + char);
+      return;
+    }
+    
+    const newCurrentNumber = currentNumber === '0' && char !== '.' ? char : currentNumber + char;
+    setCurrentNumber(newCurrentNumber);
+    setDisplay(newCurrentNumber);
+
+    if (expression.match(/(\s[+\-×÷]\s)$/)) { // If last thing was operator
+      setExpression(prev => prev + newCurrentNumber);
+    } else if (expression.includes(' ')) { // If we are editing the second number
+        const parts = expression.split(' ');
+        parts[2] = newCurrentNumber;
+        setExpression(parts.join(' '));
+    } else { // First number
+        setExpression(newCurrentNumber);
     }
   };
 
   const handleOperator = (op: string) => {
-     if (expression.slice(-1) === ' ') return; // Prevent multiple operators
+     if (expression.slice(-1) === ' ') return;
+     if (isResult) {
+        setIsResult(false);
+     }
      setExpression(prev => prev + ` ${op} `);
-     setDisplay(op);
-     setIsResult(false);
+     setCurrentNumber('0');
   }
 
   const handleEquals = () => {
-    if (expression) {
-        const finalExpression = expression.replace(/(\s[+\-×÷]\s)$/, ''); // Remove trailing operator
-        const result = evaluateExpression(finalExpression);
+    if (expression && !expression.endsWith(' ')) {
+        const result = evaluateExpression(expression);
         setDisplay(result);
-        setExpression(result);
+        setExpression(expression + ' =');
+        setCurrentNumber(result);
         setIsResult(true);
     }
   };
@@ -73,18 +87,21 @@ export default function BasicTab() {
   const clearDisplay = () => {
     setDisplay('0');
     setExpression('');
+    setCurrentNumber('0');
     setIsResult(false);
   };
   
   const toggleSign = () => {
      if (display !== '0' && !isResult) {
-       const currentNumberMatch = expression.match(/(\d+\.?\d*)$/);
-       if (currentNumberMatch) {
-           const currentNumber = currentNumberMatch[0];
-           const newNumber = String(parseFloat(currentNumber) * -1);
-           setExpression(prev => prev.slice(0, -currentNumber.length) + `(${newNumber})`);
-           setDisplay(newNumber);
-       }
+       const newValue = String(parseFloat(display) * -1);
+       setDisplay(newValue);
+       setCurrentNumber(newValue);
+       // more complex expression update needed if we want to toggle in middle of expression
+       setExpression(prev => {
+           const parts = prev.split(' ');
+           parts[parts.length -1] = newValue;
+           return parts.join(' ');
+       });
      }
   }
   
@@ -92,24 +109,35 @@ export default function BasicTab() {
     if (!isResult && display !== '0') {
       const value = parseFloat(display) / 100;
       const cleanValue = String(Number(value.toPrecision(10)));
-       const currentNumberMatch = expression.match(/(\d+\.?\d*)$/);
-       if (currentNumberMatch) {
-            const currentNumber = currentNumberMatch[0];
-            setExpression(prev => prev.slice(0, -currentNumber.length) + cleanValue);
-       }
        setDisplay(cleanValue);
+       setCurrentNumber(cleanValue);
+       setExpression(prev => {
+           const parts = prev.split(' ');
+           parts[parts.length - 1] = cleanValue;
+           return parts.join(' ');
+       });
     }
   }
   
   const inputDecimal = () => {
-      if (!display.includes('.')) {
-          handleInput('.');
+      if (isResult) {
+          clearDisplay();
+          setCurrentNumber('0.');
+          setDisplay('0.');
+          setExpression('0.');
+          setIsResult(false);
+          return;
+      }
+      if (!currentNumber.includes('.')) {
+          setCurrentNumber(prev => prev + '.');
+          setDisplay(prev => prev + '.');
+          setExpression(prev => prev + '.');
       }
   }
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
-       <Display value={display} expression={isResult ? '' : expression} />
+       <Display value={display} expression={isResult ? expression : expression.replace(/ =$/, '')} />
        <div className="grid grid-cols-4 gap-2">
         <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -120,7 +148,7 @@ export default function BasicTab() {
         <CalculatorButton onClick={() => handleOperator('×')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
         {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-        <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+        <CalculatorButton onClick={() => handleOperator('−')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
         {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
         <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
