@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { Display } from './display';
+import { create, all } from 'mathjs';
+
+const math = create(all);
 
 const CalculatorButton = ({
   onClick,
@@ -21,58 +24,85 @@ const CalculatorButton = ({
 );
 
 export default function ScientificTab() {
-  const [display, setDisplay] = useState('0');
   const [expression, setExpression] = useState('');
+  const [display, setDisplay] = useState('0');
   const [isResult, setIsResult] = useState(false);
 
   const evaluateExpression = (exp: string): string => {
     try {
-      const evaluatableExpression = exp
-        .replace(/×/g, '*')
-        .replace(/÷/g, '/')
-        .replace(/√/g, 'Math.sqrt')
-        .replace(/sin_deg/g, 'Math.sin')
-        .replace(/cos_deg/g, 'Math.cos')
-        .replace(/tan_deg/g, 'Math.tan')
-        .replace(/ln/g, 'Math.log')
-        .replace(/log/g, 'Math.log10')
-        .replace(/\^/g, '**')
-        .replace(/π/g, 'Math.PI')
-        .replace(/e/g, 'Math.E');
+        // Replace user-friendly symbols with mathjs compatible ones
+        const evaluatableExpression = exp
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/')
+            .replace(/√/g, 'sqrt')
+            .replace(/π/g, 'pi')
+            .replace(/\^/g, '^')
+            .replace(/sin\(/g, 'sin(deg(')
+            .replace(/cos\(/g, 'cos(deg(')
+            .replace(/tan\(/g, 'tan(deg(')
+            .replace(/log\(/g, 'log10(')
+            .replace(/ln\(/g, 'log('); // mathjs uses log() for natural log
+            
+      if (!evaluatableExpression) return '0';
 
-      if (/[^0-9+\-*/.%() Math.PIEsqrtcota]/.test(evaluatableExpression)) {
-         // This regex is a basic safety measure, not foolproof.
-      }
-      
-      const result = new Function(`return ${evaluatableExpression}`)();
-      if (isNaN(result) || !isFinite(result)) return "Error";
-      return String(Number(result.toPrecision(10)));
+      const result = math.evaluate(evaluatableExpression);
+      if (result === undefined || result === null || typeof result === 'function') return 'Error';
+
+      // Format the result to avoid floating point inaccuracies
+      const formattedResult = math.format(result, { precision: 10 });
+      return String(formattedResult);
     } catch (error) {
+      console.error(error);
       return "Error";
     }
   };
 
   const handleInput = (char: string) => {
     if (isResult) {
-        setExpression(char);
-        setDisplay(char);
-        setIsResult(false);
+      setExpression(char);
+      setDisplay(char);
+      setIsResult(false);
     } else {
-        setExpression(prev => prev + char);
-        setDisplay(char);
+      setExpression(prev => (prev === '0' ? char : prev + char));
+      setDisplay(prev => (prev === '0' ? char : prev + char));
     }
   };
 
   const handleOperator = (op: string) => {
-    if (expression.endsWith(' ')) return;
-    setExpression(prev => `${prev} ${op} `);
-    setIsResult(false);
+    if(isResult) {
+      setIsResult(false);
+    }
+    // Prevent adding operator if last part is already an operator
+    if (/\s[+\-×÷^]\s$/.test(expression)) {
+        // Replace the last operator
+        setExpression(prev => prev.slice(0, -3) + ` ${op} `);
+    } else if(expression !== '') {
+        setExpression(prev => `${prev} ${op} `);
+    }
+    setDisplay(expression + ` ${op} `);
+  };
+  
+  const handleUnaryOperation = (op: string) => {
+    if(isResult) setIsResult(false);
+    setExpression(prev => `${op}(${prev})`);
+    setDisplay(`${op}(${expression})`);
   };
 
+  const handleConstant = (constant: string) => {
+      if(isResult) {
+          setExpression(constant);
+          setDisplay(constant);
+          setIsResult(false);
+      } else {
+         setExpression(prev => prev + constant);
+         setDisplay(expression + constant);
+      }
+  }
+
+
   const handleEquals = () => {
-    if (expression) {
-      const finalExpression = expression.replace(/(\s[+\-×÷^]\s)$/, ''); // Remove trailing operator
-      const result = evaluateExpression(finalExpression);
+    if (expression && !expression.endsWith(' ')) {
+      const result = evaluateExpression(expression);
       setDisplay(result);
       setExpression(result);
       setIsResult(true);
@@ -87,133 +117,55 @@ export default function ScientificTab() {
   
   const backspace = () => {
     if (isResult) return;
-    setExpression(prev => prev.slice(0,-1));
-    setDisplay(d => d.slice(0, -1) || '0');
+    if (expression.endsWith(' ')) {
+       setExpression(prev => prev.slice(0,-3));
+       setDisplay(prev => prev.slice(0, -3));
+    } else {
+       const newExp = expression.slice(0,-1)
+       setExpression(newExp);
+       setDisplay(newExp || '0');
+    }
   }
-
-  const handleUnaryOperation = (op: string, mathSymbol: string) => {
-    let currentNumber = expression.match(/(-?\d+\.?\d*)$/)?.[0] || display;
-    
-    // If the display is showing a result, use that for the next operation
-    if (isResult) {
-        currentNumber = display;
-    }
-    
-    if (currentNumber === 'Error' || currentNumber === 'Infinity') return;
-
-    let result;
-    try {
-        const num = parseFloat(currentNumber);
-        switch (op) {
-            case 'sin': result = Math.sin(num * Math.PI / 180); break;
-            case 'cos': result = Math.cos(num * Math.PI / 180); break;
-            case 'tan': result = Math.tan(num * Math.PI / 180); break;
-            case 'sinh': result = Math.sinh(num); break;
-            case 'cosh': result = Math.cosh(num); break;
-            case 'tanh': result = Math.tanh(num); break;
-            case 'ln': result = Math.log(num); break;
-            case 'log': result = Math.log10(num); break;
-            case 'sqrt': result = Math.sqrt(num); break;
-            case 'x!':
-                if (num < 0 || !Number.isInteger(num)) throw new Error("Factorial of non-integer or negative");
-                if (num > 170) { result = Infinity; break; }
-                let fact = 1;
-                for (let i = 2; i <= num; i++) fact *= i;
-                result = fact;
-                break;
-            case 'e^x': result = Math.exp(num); break;
-            case '1/x': 
-                if (num === 0) throw new Error("Division by zero");
-                result = 1 / num; 
-                break;
-            case 'x^2': result = Math.pow(num, 2); break;
-            case 'x^3': result = Math.pow(num, 3); break;
-             default: result = num;
-        }
-
-        if (isNaN(result) || !isFinite(result)) {
-            setDisplay("Error");
-            setExpression("Error");
-            setIsResult(true);
-            return;
-        }
-
-        const resultStr = String(Number(result.toPrecision(10)));
-        const newExpression = `${mathSymbol}(${currentNumber})`;
-
-        // Replace the last number with the new unary expression result
-        if (isResult) {
-            setExpression(resultStr);
-        } else {
-             const baseExpression = expression.slice(0, -currentNumber.length);
-             setExpression(baseExpression + resultStr);
-        }
-        setDisplay(resultStr);
-        setIsResult(false); // Allow chaining operations
-
-    } catch {
-        setDisplay("Error");
-        setExpression("Error");
-        setIsResult(true);
-    }
-  };
   
-  const handleConstant = (constant: string, value: number) => {
-      if (isResult) {
-          setExpression(constant);
-          setDisplay(String(value));
-          setIsResult(false);
-      } else {
-          // Check if last part of expression is an operator
-          if (/\s[+\-×÷^]\s$/.test(expression) || expression === '') {
-              setExpression(prev => prev + constant);
-          } else {
-              // Replace last number with constant
-              setExpression(prev => prev.replace(/(-?\d+\.?\d*)$/, constant));
-          }
-           setDisplay(String(value));
-      }
-  }
-
   return (
       <div className="w-full max-w-md mx-auto space-y-4">
-          <Display value={display} expression={isResult ? '' : expression} />
+          <Display value={display} expression={isResult ? `Ans = ${display}` : expression} />
           <div className="grid grid-cols-6 gap-2">
-                <CalculatorButton onClick={() => handleUnaryOperation('sin', 'sin_deg')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('cos', 'cos_deg')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('tan', 'tan_deg')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('sinh', 'sinh')} label="sinh" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('cosh', 'cosh')} label="cosh" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('tanh', 'tanh')} label="tanh" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleUnaryOperation('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleUnaryOperation('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleUnaryOperation('tan')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                 <CalculatorButton onClick={() => handleUnaryOperation('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleUnaryOperation('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                 <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 
-                <CalculatorButton onClick={() => handleUnaryOperation('x^2', 'sqr')} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('x^3', 'cube')} label="x³" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('^')} label="xʸ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleInput('(')} label="(" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleInput(')')} label=")" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={clear} label="AC" className="bg-destructive/80 text-destructive-foreground hover:bg-destructive" />
                 <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('÷')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-                <CalculatorButton onClick={() => handleUnaryOperation('sqrt', '√')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('ln', 'ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleUnaryOperation('sqrt')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+                <CalculatorButton onClick={() => handleUnaryOperation('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('×')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-                <CalculatorButton onClick={() => handleUnaryOperation('log', 'log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('1/x', '1/')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleConstant('π')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+                <CalculatorButton onClick={() => handleInput('%')} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
-
-                <CalculatorButton onClick={() => handleUnaryOperation('x!', 'fact')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('e^x', 'e^')} label="eˣ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                
+                <CalculatorButton onClick={() => handleUnaryOperation('abs')} label="|x|" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
+                <CalculatorButton onClick={() => { setExpression(prev => `(${prev})^2`); setDisplay(`(${expression})^2`);}} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => handleConstant('π', Math.PI)} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleConstant('e', Math.E)} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                 <CalculatorButton onClick={() => handleInput('(')} label="(" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleInput(')')} label=")" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <div className="col-span-2">
+                    <CalculatorButton onClick={() => handleInput('0')} label="0" className="w-full bg-card hover:bg-muted" />
+                </div>
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
+                <CalculatorButton onClick={() => { setExpression(prev => `1/(${prev})`); setDisplay(`1/(${expression})`);}} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={handleEquals} label="=" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
   );
