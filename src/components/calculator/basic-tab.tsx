@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Display } from './display';
+import { Trash, Delete } from 'lucide-react';
 
 const CalculatorButton = ({
   onClick,
@@ -70,7 +71,14 @@ export default function BasicTab() {
      if (isResult) {
         setIsResult(false);
      }
-     setExpression(prev => prev + ` ${op} `);
+     
+     if (expression && !expression.match(/(\s[+\-×÷]\s)$/)) {
+        const evaluated = evaluateExpression(expression);
+        setExpression(evaluated + ` ${op} `);
+        setDisplay(evaluated);
+     } else {
+        setExpression(prev => prev + ` ${op} `);
+     }
      setCurrentNumber('0');
   }
 
@@ -78,8 +86,7 @@ export default function BasicTab() {
     if (expression && !expression.endsWith(' ')) {
         const result = evaluateExpression(expression);
         setDisplay(result);
-        setExpression(expression + ' =');
-        setCurrentNumber(result);
+        setExpression(result);
         setIsResult(true);
     }
   };
@@ -91,12 +98,25 @@ export default function BasicTab() {
     setIsResult(false);
   };
   
+  const handleBackspace = () => {
+    if (isResult) return;
+    
+    if (currentNumber !== '0' && currentNumber.length > 0) {
+        const newCurrentNumber = currentNumber.slice(0, -1) || '0';
+        setCurrentNumber(newCurrentNumber);
+        setDisplay(newCurrentNumber);
+        
+        const expressionParts = expression.trim().split(' ');
+        expressionParts[expressionParts.length - 1] = newCurrentNumber;
+        setExpression(expressionParts.join(' '));
+    }
+  };
+
   const toggleSign = () => {
      if (display !== '0' && !isResult) {
        const newValue = String(parseFloat(display) * -1);
        setDisplay(newValue);
        setCurrentNumber(newValue);
-       // more complex expression update needed if we want to toggle in middle of expression
        setExpression(prev => {
            const parts = prev.split(' ');
            parts[parts.length -1] = newValue;
@@ -129,19 +149,29 @@ export default function BasicTab() {
           return;
       }
       if (!currentNumber.includes('.')) {
-          setCurrentNumber(prev => prev + '.');
-          setDisplay(prev => prev + '.');
-          setExpression(prev => prev + '.');
+          const newCurrentNumber = currentNumber + '.';
+          setCurrentNumber(newCurrentNumber);
+          setDisplay(newCurrentNumber);
+          
+          if (expression.match(/(\s[+\-×÷]\s)$/)) {
+            setExpression(prev => prev + newCurrentNumber);
+          } else if (expression.includes(' ')) {
+              const parts = expression.split(' ');
+              parts[2] = newCurrentNumber;
+              setExpression(parts.join(' '));
+          } else {
+              setExpression(newCurrentNumber);
+          }
       }
   }
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-4">
-       <Display value={display} expression={isResult ? expression : expression.replace(/ =$/, '')} />
+       <Display value={display} expression={isResult ? '' : expression.replace(/ =$/, '')} />
        <div className="grid grid-cols-4 gap-2">
-        <CalculatorButton onClick={clearDisplay} label="AC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={clearDisplay} label={<Trash className="w-6 h-6" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+        <CalculatorButton onClick={handleBackspace} label={<Delete className="w-6 h-6" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-        <CalculatorButton onClick={percentage} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
         <CalculatorButton onClick={() => handleOperator('÷')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
         
         {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
