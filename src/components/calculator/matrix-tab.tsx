@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -10,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import { cn } from '@/lib/utils';
 
 type Matrix = number[][];
 type UnaryOperationTarget = 'A' | 'B';
@@ -148,21 +150,32 @@ export default function MatrixTab() {
             <Separator />
 
             <div className="space-y-4">
-                <h4 className="font-medium text-center">Operations</h4>
-                <div className="flex justify-center">
-                    <div className="p-3 border rounded-lg bg-muted/50 flex items-center gap-4">
-                        <p className="text-sm font-medium">Target for Unary Ops:</p>
-                        <RadioGroup value={unaryOpTarget} onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} className="flex gap-4">
-                            <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="r_a" />
-                            <Label htmlFor="r_a">Matrix A</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="r_b" />
-                            <Label htmlFor="r_b">Matrix B</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
+                <div className="flex flex-col items-center gap-3">
+                     <h4 className="font-medium text-center">Unary Operations Target</h4>
+                    <RadioGroup 
+                        value={unaryOpTarget} 
+                        onValueChange={(v) => setUnaryOpTarget(v as UnaryOperationTarget)} 
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground"
+                    >
+                        <Label 
+                            htmlFor="r_a" 
+                             className={cn("inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer", 
+                                unaryOpTarget === 'A' && "bg-background text-foreground shadow-sm"
+                            )}
+                        >
+                            <RadioGroupItem value="A" id="r_a" className="sr-only"/>
+                           Matrix A
+                        </Label>
+                         <Label 
+                            htmlFor="r_b" 
+                            className={cn("inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer", 
+                                unaryOpTarget === 'B' && "bg-background text-foreground shadow-sm"
+                            )}
+                        >
+                            <RadioGroupItem value="B" id="r_b" className="sr-only"/>
+                           Matrix B
+                        </Label>
+                    </RadioGroup>
                 </div>
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     <Button onClick={() => handleOperation('add')}>A + B</Button>
@@ -200,3 +213,4 @@ export default function MatrixTab() {
         </div>
     );
 }
+
