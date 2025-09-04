@@ -132,7 +132,7 @@ export default function ScientificTab() {
   }
 
   const handleEquals = () => {
-    if (expression && !/[\s(]$/.test(expression)) {
+    if (expression) {
       let finalExpression = expression;
       
       const openParen = (finalExpression.match(/\(/g) || []).length;
@@ -177,9 +177,32 @@ export default function ScientificTab() {
   
   const toggleSign = () => {
     if (display === '0' || isResult) return;
-    setExpression(prev => prev.startsWith('(-') ? prev.slice(2, -1) : `(-${prev})`);
-    setDisplay(prev => prev.startsWith('(-') ? prev.slice(2, -1) : `(-${prev})`);
+    
+    // This logic is simplified and might not be robust for all expressions.
+    // It's intended to work for the current number being input.
+    setExpression(prev => {
+        const parts = prev.split(/([+\-×÷(])/);
+        const lastPart = parts.pop() || '';
+        
+        if (lastPart.startsWith('-')) {
+            parts.push(lastPart.substring(1));
+        } else if (lastPart !== '') {
+            parts.push(`-${lastPart}`);
+        } else {
+            // Handle case where last char is an operator
+            const secondLast = parts.pop() || '';
+            if(secondLast === '('){
+                 parts.push(secondLast, '-');
+            } else {
+                 parts.push(secondLast, lastPart, '-');
+            }
+        }
+        return parts.join('');
+    });
+
+    setDisplay(prev => prev.startsWith('-') ? prev.substring(1) : `-${prev}`);
   };
+
 
   // Memory functions
     const handleMemoryClear = () => setMemory(math.bignumber(0));
@@ -240,7 +263,7 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={handleMemoryAdd} label="M+" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/8-0" />
                 
                 <CalculatorButton onClick={handleMemorySubtract} label="M-" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={handleMemoryRecall} label="MR" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
