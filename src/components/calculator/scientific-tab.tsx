@@ -4,7 +4,15 @@ import { useState } from 'react';
 import { Display } from './display';
 import { create, all } from 'mathjs';
 
-const math = create(all);
+const math = create(all, {
+    number: 'BigNumber',
+    precision: 64
+});
+
+math.config({
+    number: 'number',
+});
+
 
 const CalculatorButton = ({
   onClick,
@@ -37,7 +45,8 @@ export default function ScientificTab() {
             .replace(/π/g, 'pi')
             .replace(/\^/g, '^')
             .replace(/log\(/g, 'log10(')
-            .replace(/ln\(/g, 'log(');
+            .replace(/ln\(/g, 'log(')
+            .replace(/E/g, 'e'); // handle e
             
       if (!evaluatableExpression) return '0';
 
@@ -58,7 +67,7 @@ export default function ScientificTab() {
       setDisplay(char);
       setIsResult(false);
     } else {
-      const newExpression = expression === '0' ? char : expression + char;
+      const newExpression = expression === '0' && char !== '.' ? char : expression + char;
       setExpression(newExpression);
       setDisplay(newExpression);
     }
@@ -69,7 +78,7 @@ export default function ScientificTab() {
       setExpression(display + op);
       setDisplay(display + op);
       setIsResult(false);
-    } else if (expression !== '' && !/[+\-×÷^]$/.test(expression.trim().slice(-1))) {
+    } else if (expression !== '' && !/[+\-×÷^%!]$/.test(expression.trim().slice(-1))) {
         const newExpression = expression + op;
         setExpression(newExpression);
         setDisplay(newExpression);
@@ -99,22 +108,20 @@ export default function ScientificTab() {
          setDisplay(newExpression);
       }
   }
+  
+  const handleReciprocal = () => {
+    handleOperator('^(-1)');
+  }
 
   const handleEquals = () => {
     if (expression && !expression.endsWith(' ')) {
       let finalExpression = expression;
       
-      // Auto-close parentheses
       const openParen = (finalExpression.match(/\(/g) || []).length;
       const closeParen = (finalExpression.match(/\)/g) || []).length;
       if (openParen > closeParen) {
         finalExpression += ')'.repeat(openParen - closeParen);
       }
-
-      // Handle degree conversion for trig functions
-      finalExpression = finalExpression.replace(/(sin|cos|tan)\(([^)]+)\)/g, (match, func, angle) => {
-          return `${func}(deg(${angle}))`;
-      });
       
       const result = evaluateExpression(finalExpression);
       setDisplay(result);
@@ -171,7 +178,7 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={() => handleOperator('^2')} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => handleInput('1/')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={handleEquals} label="=" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary/90" />
