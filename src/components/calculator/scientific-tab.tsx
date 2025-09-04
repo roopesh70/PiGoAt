@@ -67,6 +67,12 @@ export default function ScientificTab() {
       }
 
       if (!evaluatableExpression) return '0';
+      
+      const openParen = (evaluatableExpression.match(/\(/g) || []).length;
+      const closeParen = (evaluatableExpression.match(/\)/g) || []).length;
+      if (openParen > closeParen) {
+        evaluatableExpression += ')'.repeat(openParen - closeParen);
+      }
 
       const result = math.evaluate(evaluatableExpression);
       if (result === undefined || result === null || typeof result === 'function') return "Error";
@@ -133,15 +139,7 @@ export default function ScientificTab() {
 
   const handleEquals = () => {
     if (expression) {
-      let finalExpression = expression;
-      
-      const openParen = (finalExpression.match(/\(/g) || []).length;
-      const closeParen = (finalExpression.match(/\)/g) || []).length;
-      if (openParen > closeParen) {
-        finalExpression += ')'.repeat(openParen - closeParen);
-      }
-      
-      const result = evaluateExpression(finalExpression);
+      const result = evaluateExpression(expression);
       if(result !== 'Error') {
           setLastAnswer(result);
       }
@@ -175,56 +173,61 @@ export default function ScientificTab() {
     });
   }
   
-  const toggleSign = () => {
-    if (display === '0' || isResult) return;
+ const toggleSign = () => {
+    if (isResult) {
+      const currentVal = parseFloat(display);
+      if (!isNaN(currentVal)) {
+        const newVal = String(currentVal * -1);
+        setDisplay(newVal);
+        setExpression(newVal);
+      }
+      return;
+    }
 
-    setExpression(prev => {
-        const operators = /(?<!e)[+\-×÷(]/g;
-        let lastOpIndex = -1;
-        let match;
-        while ((match = operators.exec(prev)) !== null) {
-            lastOpIndex = match.index;
-        }
+    if (expression === '0' || expression === '') return;
 
-        if (lastOpIndex === -1) { // No operator found, negate the whole thing
-            return prev.startsWith('-') ? prev.substring(1) : `-${prev}`;
-        }
+    // Regex to find the last number in the expression.
+    // It can be a decimal, integer, and can be at the start or after an operator.
+    const lastNumberRegex = /([+\-×÷(]|^)([\d.]+)$/;
+    const match = expression.match(lastNumberRegex);
 
-        const prefix = prev.substring(0, lastOpIndex + 1);
-        const numberToToggle = prev.substring(lastOpIndex + 1);
-        
-        if(prev[lastOpIndex] === '(') {
-            return `${prefix}(-${numberToToggle}`
-        }
+    if (match) {
+        const prefix = match[1] || ''; // Operator or start of string
+        let number = match[2];
+        let newExpression;
 
-        if (prev[lastOpIndex] === '+') {
-            return `${prev.substring(0, lastOpIndex)}-${numberToToggle}`;
-        }
-        
-        if (prev[lastOpIndex] === '−' || prev[lastOpIndex] === '-') {
-             return `${prev.substring(0, lastOpIndex)}+${numberToToggle}`;
-        }
-        
-        // It's a multiply or divide, so we need to add a negation
-        return `${prefix}(-${numberToToggle}`;
-    });
-     setDisplay(prev => {
-        const operators = /(?<!e)[+\-×÷(]/g;
-        let lastOpIndex = -1;
-        let match;
-        while ((match = operators.exec(prev)) !== null) {
-            lastOpIndex = match.index;
-        }
+        // Find the start index of the matched part
+        const matchIndex = expression.lastIndexOf(match[0]);
+        const expressionPrefix = expression.substring(0, matchIndex);
 
-        if (lastOpIndex === -1) { // No operator found, negate the whole thing
-            return prev.startsWith('-') ? prev.substring(1) : `-${prev}`;
+        if (prefix === '+') {
+            // Change 5+5 to 5-5
+            newExpression = `${expressionPrefix}-` + number;
+        } else if (prefix === '-') {
+             // Change 5-5 to 5+5
+            newExpression = `${expressionPrefix}+` + number;
+        } else if (prefix === '' || prefix === '(') {
+            // It's the first number or after a parenthesis, so prepend a minus
+            // e.g. "5" becomes "-5" or "(5" becomes "(-5"
+            newExpression = `${expressionPrefix}${prefix}-` + number;
+        } else if (prefix === '×' || prefix === '÷') {
+             // It's after multiplication or division, so we need to add parens with negation
+             // e.g. "5*5" becomes "5*(-5)"
+             newExpression = `${expressionPrefix}${prefix}(-` + number + ')';
         }
-        
-        const numberToToggle = prev.substring(lastOpIndex + 1);
-        const prefix = prev.substring(0, lastOpIndex + 1);
-        return numberToToggle.startsWith('-') ? prefix + numberToToggle.substring(1) : prefix + `-${numberToToggle}`
-    });
-  };
+         
+        if (newExpression) {
+            setExpression(newExpression);
+            setDisplay(newExpression);
+        }
+    } else if (!isNaN(parseFloat(expression))) {
+        // Handle case where expression is just a single number that might be negative
+        const num = parseFloat(expression);
+        const newExp = String(num * -1);
+        setExpression(newExp);
+        setDisplay(newExp);
+    }
+};
 
 
   // Memory functions
@@ -302,5 +305,7 @@ export default function ScientificTab() {
       </div>
   );
 }
+
+    
 
     
