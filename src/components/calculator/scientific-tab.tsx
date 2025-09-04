@@ -280,15 +280,15 @@ export default function ScientificTab() {
             {/* Advanced Functions */}
             <div className="grid grid-cols-5 gap-2">
               <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className={isSecondFunctionActive ? "bg-primary text-primary-foreground" : "bg-blue-900/50 hover:bg-blue-900/70"} isActive={isSecondFunctionActive} />
-              <CalculatorButton onClick={isSecondFunctionActive ? handleMemoryClear : () => handleInput('(')} label={isSecondFunctionActive ? "MC" : "("} className={funcBtnClass} />
-              <CalculatorButton onClick={isSecondFunctionActive ? handleMemorySubtract : () => handleInput(')')} label={isSecondFunctionActive ? "M-" : ")"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => isSecondFunctionActive ? handleMemoryClear() : handleInput('(')} label={isSecondFunctionActive ? "MC" : "("} className={funcBtnClass} />
+              <CalculatorButton onClick={() => isSecondFunctionActive ? handleMemorySubtract() : handleInput(')')} label={isSecondFunctionActive ? "M-" : ")"} className={funcBtnClass} />
               <CalculatorButton onClick={handleMemoryRecall} label="MR" className={funcBtnClass} />
               <CalculatorButton onClick={handleMemoryAdd} label="M+" className={funcBtnClass} />
               
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className={funcBtnClass} />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className={funcBtnClass} />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className={funcBtnClass} />
-              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className={funcBtnClass} />
+              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-900/80 hover:bg-blue-900" />
               <CalculatorButton onClick={() => handleConstant('pi')} label="π" className={funcBtnClass} />
 
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asinh' : 'sinh')} label={isSecondFunctionActive ? <InlineMath math="sinh^{-1}" /> : "sinh"} className={funcBtnClass} />
@@ -340,3 +340,5 @@ export default function ScientificTab() {
       </div>
   );
 }
+
+    
