@@ -271,46 +271,48 @@ export default function ScientificTab() {
       }
     };
 
+    const funcBtnClass = "bg-secondary hover:bg-secondary/80";
+
   return (
       <div className="w-full max-w-sm mx-auto space-y-4">
           <Display value={display} expression={`${angleMode.toUpperCase()} | ${isResult ? `Ans = ${display}` : expression}`} />
           <div className="space-y-2">
             {/* Advanced Functions */}
             <div className="grid grid-cols-5 gap-2">
-              <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className="bg-gray-400/80 text-white hover:bg-gray-500" isActive={isSecondFunctionActive} />
-              <CalculatorButton onClick={handleMemoryClear} label="MC" className="bg-orange-500/80 text-white hover:bg-orange-500" />
-              <CalculatorButton onClick={handleMemoryRecall} label="MR" className="bg-orange-500/80 text-white hover:bg-orange-500" />
-              <CalculatorButton onClick={handleMemoryAdd} label="M+" className="bg-orange-500/80 text-white hover:bg-orange-500" />
-              <CalculatorButton onClick={handleMemorySubtract} label="M-" className="bg-orange-500/80 text-white hover:bg-orange-500" />
+              <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className={funcBtnClass} isActive={isSecondFunctionActive} />
+              <CalculatorButton onClick={handleMemoryClear} label="MC" className={funcBtnClass} />
+              <CalculatorButton onClick={handleMemoryRecall} label="MR" className={funcBtnClass} />
+              <CalculatorButton onClick={handleMemoryAdd} label="M+" className={funcBtnClass} />
+              <CalculatorButton onClick={handleMemorySubtract} label="M-" className={funcBtnClass} />
               
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-800 text-white hover:bg-blue-700" />
-              <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-green-500/80 text-white hover:bg-green-500" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className={funcBtnClass} />
+              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleConstant('pi')} label="π" className={funcBtnClass} />
 
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asinh' : 'sinh')} label={isSecondFunctionActive ? <InlineMath math="sinh^{-1}" /> : "sinh"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acosh' : 'cosh')} label={isSecondFunctionActive ? <InlineMath math="cosh^{-1}" /> : "cosh"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atanh' : 'tanh')} label={isSecondFunctionActive ? <InlineMath math="tanh^{-1}" /> : "tanh"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-green-500/80 text-white hover:bg-green-500" />
-              <CalculatorButton onClick={() => handleOperator('!')} label="n!" className="bg-red-500/80 text-white hover:bg-red-500" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asinh' : 'sinh')} label={isSecondFunctionActive ? <InlineMath math="sinh^{-1}" /> : "sinh"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acosh' : 'cosh')} label={isSecondFunctionActive ? <InlineMath math="cosh^{-1}" /> : "cosh"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atanh' : 'tanh')} label={isSecondFunctionActive ? <InlineMath math="tanh^{-1}" /> : "tanh"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleConstant('e')} label="e" className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleOperator('!')} label="n!" className={funcBtnClass} />
               
-              <CalculatorButton onClick={() => handleFunction('log')} label={"log"} className="bg-teal-500/80 text-white hover:bg-teal-500" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'log2' : 'ln')} label={isSecondFunctionActive ? <InlineMath math="log_2"/> : "ln"} className="bg-teal-500/80 text-white hover:bg-teal-500" />
-              <CalculatorButton onClick={() => handleFunction('exp')} label={<InlineMath math="e^x" />} className="bg-teal-500/80 text-white hover:bg-teal-500" />
-              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^3' : '^2')} label={isSecondFunctionActive ? <InlineMath math="x^3" /> : <InlineMath math="x^2" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
-              <CalculatorButton onClick={() => handleOperator('^')} label={<InlineMath math="x^y" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
+              <CalculatorButton onClick={() => handleFunction('log')} label={"log"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'log2' : 'ln')} label={isSecondFunctionActive ? <InlineMath math="log_2"/> : "ln"} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleFunction('exp')} label={<InlineMath math="e^x" />} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^3' : '^2')} label={isSecondFunctionActive ? <InlineMath math="x^3" /> : <InlineMath math="x^2" />} className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleOperator('^')} label={<InlineMath math="x^y" />} className={funcBtnClass} />
               
-              <CalculatorButton onClick={() => handleOperator('sqrt(')} label="√" className="bg-cyan-500/80 text-white hover:bg-cyan-500" />
-              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^(1/3)' : '^(1/')} label={isSecondFunctionActive ? <InlineMath math="\sqrt[3]{x}" /> : <InlineMath math="\sqrt[y]{x}" />} className="bg-cyan-500/80 text-white hover:bg-cyan-500" />
-              <CalculatorButton onClick={handleReciprocal} label={<InlineMath math="1/x" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
-              <CalculatorButton onClick={handleAbs} label="|x|" className="bg-blue-500/80 text-white hover:bg-blue-500" />
-               <CalculatorButton onClick={backspace} label="⌫" className="bg-red-500/80 text-white hover:bg-red-500"/>
+              <CalculatorButton onClick={() => handleOperator('sqrt(')} label="√" className={funcBtnClass} />
+              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^(1/3)' : '^(1/')} label={isSecondFunctionActive ? <InlineMath math="\sqrt[3]{x}" /> : <InlineMath math="\sqrt[y]{x}" />} className={funcBtnClass} />
+              <CalculatorButton onClick={handleReciprocal} label={<InlineMath math="1/x" />} className={funcBtnClass} />
+              <CalculatorButton onClick={handleAbs} label="|x|" className={funcBtnClass} />
+               <CalculatorButton onClick={backspace} label="⌫" className={funcBtnClass}/>
             </div>
 
             {/* Basic Numpad */}
             <div className="grid grid-cols-4 gap-2">
-                <CalculatorButton onClick={clear} label="C" className="bg-red-500/80 text-white hover:bg-red-500 col-span-1" />
+                <CalculatorButton onClick={clear} label="C" className="bg-secondary hover:bg-secondary/80 col-span-1" />
                 <CalculatorButton onClick={toggleSign} label="±" className="bg-muted text-muted-foreground hover:bg-muted/80" />
                 <CalculatorButton onClick={() => handleOperator('%')} label="%" className="bg-muted text-muted-foreground hover:bg-muted/80" />
                 <CalculatorButton onClick={() => handleOperator('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
