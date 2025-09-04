@@ -286,7 +286,7 @@ export default function ScientificTab() {
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
-              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-600/80 text-white hover:bg-blue-600" />
+              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-800 text-white hover:bg-blue-700" />
               <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-green-500/80 text-white hover:bg-green-500" />
 
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asinh' : 'sinh')} label={isSecondFunctionActive ? <InlineMath math="sinh^{-1}" /> : "sinh"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
@@ -332,7 +332,7 @@ export default function ScientificTab() {
                 
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted col-span-2" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={handleEquals} label="=" className="bg-green-500 text-white hover:bg-green-500/90" />
+                <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
           </div>
       </div>
