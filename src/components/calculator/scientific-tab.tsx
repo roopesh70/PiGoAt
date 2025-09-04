@@ -279,7 +279,7 @@ export default function ScientificTab() {
           <div className="space-y-2">
             {/* Advanced Functions */}
             <div className="grid grid-cols-5 gap-2">
-              <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className={funcBtnClass} isActive={isSecondFunctionActive} />
+              <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className={isSecondFunctionActive ? "bg-primary text-primary-foreground" : "bg-blue-900/50 hover:bg-blue-900/70"} isActive={isSecondFunctionActive} />
               <CalculatorButton onClick={isSecondFunctionActive ? handleMemoryClear : () => handleInput('(')} label={isSecondFunctionActive ? "MC" : "("} className={funcBtnClass} />
               <CalculatorButton onClick={isSecondFunctionActive ? handleMemorySubtract : () => handleInput(')')} label={isSecondFunctionActive ? "M-" : ")"} className={funcBtnClass} />
               <CalculatorButton onClick={handleMemoryRecall} label="MR" className={funcBtnClass} />
