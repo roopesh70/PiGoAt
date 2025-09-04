@@ -281,9 +281,9 @@ export default function ScientificTab() {
             <div className="grid grid-cols-5 gap-2">
               <CalculatorButton onClick={() => setIsSecondFunctionActive(prev => !prev)} label="2nd" className={funcBtnClass} isActive={isSecondFunctionActive} />
               <CalculatorButton onClick={handleMemoryClear} label="MC" className={funcBtnClass} />
+              <CalculatorButton onClick={handleMemorySubtract} label="M-" className={funcBtnClass} />
               <CalculatorButton onClick={handleMemoryRecall} label="MR" className={funcBtnClass} />
               <CalculatorButton onClick={handleMemoryAdd} label="M+" className={funcBtnClass} />
-              <CalculatorButton onClick={handleMemorySubtract} label="M-" className={funcBtnClass} />
               
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className={funcBtnClass} />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className={funcBtnClass} />
