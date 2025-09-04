@@ -30,27 +30,20 @@ export default function ScientificTab() {
 
   const evaluateExpression = (exp: string): string => {
     try {
-        // Replace user-friendly symbols with mathjs compatible ones
-        const evaluatableExpression = exp
+        let evaluatableExpression = exp
             .replace(/×/g, '*')
             .replace(/÷/g, '/')
             .replace(/√/g, 'sqrt')
             .replace(/π/g, 'pi')
             .replace(/\^/g, '^')
-            // mathjs trig functions default to radians, so we need to specify if we're using degrees
-            // For simplicity, we'll assume degree inputs from the calculator buttons
-            .replace(/sin\(/g, 'sin(deg(')
-            .replace(/cos\(/g, 'cos(deg(')
-            .replace(/tan\(/g, 'tan(deg(')
-            .replace(/log\(/g, 'log10(') // log is log10
-            .replace(/ln\(/g, 'log('); // ln is natural log
+            .replace(/log\(/g, 'log10(')
+            .replace(/ln\(/g, 'log(');
             
       if (!evaluatableExpression) return '0';
 
       const result = math.evaluate(evaluatableExpression);
       if (result === undefined || result === null || typeof result === 'function') return 'Error';
 
-      // Format the result to avoid floating point inaccuracies
       const formattedResult = math.format(result, { precision: 10 });
       return String(formattedResult);
     } catch (error) {
@@ -109,13 +102,19 @@ export default function ScientificTab() {
 
   const handleEquals = () => {
     if (expression && !expression.endsWith(' ')) {
-      // Auto-close parentheses if needed
-      const openParen = (expression.match(/\(/g) || []).length;
-      const closeParen = (expression.match(/\)/g) || []).length;
       let finalExpression = expression;
+      
+      // Auto-close parentheses
+      const openParen = (finalExpression.match(/\(/g) || []).length;
+      const closeParen = (finalExpression.match(/\)/g) || []).length;
       if (openParen > closeParen) {
         finalExpression += ')'.repeat(openParen - closeParen);
       }
+
+      // Handle degree conversion for trig functions
+      finalExpression = finalExpression.replace(/(sin|cos|tan)\(([^)]+)\)/g, (match, func, angle) => {
+          return `${func}(deg(${angle}))`;
+      });
       
       const result = evaluateExpression(finalExpression);
       setDisplay(result);
@@ -173,7 +172,7 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
                 <CalculatorButton onClick={() => handleInput('1/')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleInput('0')} label="0" className="col-span-1 bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={handleEquals} label="=" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
