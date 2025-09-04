@@ -35,6 +35,7 @@ export default function ScientificTab() {
   const [expression, setExpression] = useState('');
   const [display, setDisplay] = useState('0');
   const [isResult, setIsResult] = useState(false);
+  const [lastAnswer, setLastAnswer] = useState('0');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [memory, setMemory] = useState(math.bignumber(0));
   const [isSecondFunctionActive, setIsSecondFunctionActive] = useState(false);
@@ -54,7 +55,7 @@ export default function ScientificTab() {
         .replace(/log\(/g, 'log10(')
         .replace(/ln\(/g, 'log(')
         .replace(/E/g, 'e')
-        .replace(/ans/g, `(${display})`)
+        .replace(/ans/g, `(${lastAnswer})`)
         .replace(/−/g, '-');
         
 
@@ -141,6 +142,9 @@ export default function ScientificTab() {
       }
       
       const result = evaluateExpression(finalExpression);
+      if(result !== 'Error') {
+          setLastAnswer(result);
+      }
       setDisplay(result);
       setExpression(result);
       setIsResult(true);
@@ -151,6 +155,7 @@ export default function ScientificTab() {
     setDisplay('0');
     setExpression('');
     setIsResult(false);
+    setLastAnswer('0');
   };
   
   const backspace = () => {
@@ -178,14 +183,25 @@ export default function ScientificTab() {
 
   // Memory functions
     const handleMemoryClear = () => setMemory(math.bignumber(0));
-    const handleMemoryRecall = () => handleInput(math.format(memory));
+    const handleMemoryRecall = () => {
+      const memVal = math.format(memory);
+      handleInput(memVal);
+    }
     const handleMemoryAdd = () => {
-        const currentValue = math.bignumber(display === '0' ? expression : display);
+      try {
+        const currentValue = math.bignumber(evaluateExpression(expression) || '0');
         setMemory(math.add(memory, currentValue));
+      } catch (e) {
+        console.error("Invalid expression for M+");
+      }
     };
     const handleMemorySubtract = () => {
-        const currentValue = math.bignumber(display === '0' ? expression : display);
+       try {
+        const currentValue = math.bignumber(evaluateExpression(expression) || '0');
         setMemory(math.subtract(memory, currentValue));
+      } catch (e) {
+        console.error("Invalid expression for M-");
+      }
     };
 
   return (
