@@ -37,11 +37,13 @@ export default function ScientificTab() {
             .replace(/√/g, 'sqrt')
             .replace(/π/g, 'pi')
             .replace(/\^/g, '^')
+            // mathjs trig functions default to radians, so we need to specify if we're using degrees
+            // For simplicity, we'll assume degree inputs from the calculator buttons
             .replace(/sin\(/g, 'sin(deg(')
             .replace(/cos\(/g, 'cos(deg(')
             .replace(/tan\(/g, 'tan(deg(')
-            .replace(/log\(/g, 'log10(')
-            .replace(/ln\(/g, 'log('); // mathjs uses log() for natural log
+            .replace(/log\(/g, 'log10(') // log is log10
+            .replace(/ln\(/g, 'log('); // ln is natural log
             
       if (!evaluatableExpression) return '0';
 
@@ -63,29 +65,34 @@ export default function ScientificTab() {
       setDisplay(char);
       setIsResult(false);
     } else {
-      setExpression(prev => (prev === '0' ? char : prev + char));
-      setDisplay(prev => (prev === '0' ? char : prev + char));
+      const newExpression = expression === '0' ? char : expression + char;
+      setExpression(newExpression);
+      setDisplay(newExpression);
     }
   };
 
   const handleOperator = (op: string) => {
     if(isResult) {
+      setExpression(display + op);
+      setDisplay(display + op);
       setIsResult(false);
+    } else if (expression !== '' && !/[+\-×÷^]$/.test(expression.trim().slice(-1))) {
+        const newExpression = expression + op;
+        setExpression(newExpression);
+        setDisplay(newExpression);
     }
-    // Prevent adding operator if last part is already an operator
-    if (/\s[+\-×÷^]\s$/.test(expression)) {
-        // Replace the last operator
-        setExpression(prev => prev.slice(0, -3) + ` ${op} `);
-    } else if(expression !== '') {
-        setExpression(prev => `${prev} ${op} `);
-    }
-    setDisplay(expression + ` ${op} `);
   };
   
-  const handleUnaryOperation = (op: string) => {
-    if(isResult) setIsResult(false);
-    setExpression(prev => `${op}(${prev})`);
-    setDisplay(`${op}(${expression})`);
+  const handleFunction = (func: string) => {
+    if(isResult) {
+        setExpression(`${func}(`);
+        setDisplay(`${func}(`);
+        setIsResult(false);
+    } else {
+        const newExpression = expression + `${func}(`;
+        setExpression(newExpression);
+        setDisplay(newExpression);
+    }
   };
 
   const handleConstant = (constant: string) => {
@@ -94,15 +101,23 @@ export default function ScientificTab() {
           setDisplay(constant);
           setIsResult(false);
       } else {
-         setExpression(prev => prev + constant);
-         setDisplay(expression + constant);
+         const newExpression = expression + constant;
+         setExpression(newExpression);
+         setDisplay(newExpression);
       }
   }
 
-
   const handleEquals = () => {
     if (expression && !expression.endsWith(' ')) {
-      const result = evaluateExpression(expression);
+      // Auto-close parentheses if needed
+      const openParen = (expression.match(/\(/g) || []).length;
+      const closeParen = (expression.match(/\)/g) || []).length;
+      let finalExpression = expression;
+      if (openParen > closeParen) {
+        finalExpression += ')'.repeat(openParen - closeParen);
+      }
+      
+      const result = evaluateExpression(finalExpression);
       setDisplay(result);
       setExpression(result);
       setIsResult(true);
@@ -117,10 +132,7 @@ export default function ScientificTab() {
   
   const backspace = () => {
     if (isResult) return;
-    if (expression.endsWith(' ')) {
-       setExpression(prev => prev.slice(0,-3));
-       setDisplay(prev => prev.slice(0, -3));
-    } else {
+    if (expression.length > 0) {
        const newExp = expression.slice(0,-1)
        setExpression(newExp);
        setDisplay(newExp || '0');
@@ -131,11 +143,11 @@ export default function ScientificTab() {
       <div className="w-full max-w-md mx-auto space-y-4">
           <Display value={display} expression={isResult ? `Ans = ${display}` : expression} />
           <div className="grid grid-cols-6 gap-2">
-                <CalculatorButton onClick={() => handleUnaryOperation('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('tan')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                 <CalculatorButton onClick={() => handleUnaryOperation('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleUnaryOperation('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('tan')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                 <CalculatorButton onClick={() => handleFunction('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                  <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 
                 <CalculatorButton onClick={() => handleOperator('^')} label="xʸ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -145,25 +157,25 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('÷')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-                <CalculatorButton onClick={() => handleUnaryOperation('sqrt')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('sqrt')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-                <CalculatorButton onClick={() => handleUnaryOperation('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('×')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
                 <CalculatorButton onClick={() => handleConstant('π')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-                <CalculatorButton onClick={() => handleInput('%')} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('%')} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => handleUnaryOperation('abs')} label="|x|" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleFunction('abs')} label="|x|" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
-                <CalculatorButton onClick={() => { setExpression(prev => `(${prev})^2`); setDisplay(`(${expression})^2`);}} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('^2')} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => { setExpression(prev => `1/(${prev})`); setDisplay(`1/(${expression})`);}} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('1/')} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleInput('0')} label="0" className="col-span-1 bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={handleEquals} label="=" className="col-span-3 bg-primary text-primary-foreground hover:bg-primary/90" />
+                <CalculatorButton onClick={handleEquals} label="=" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
   );
