@@ -17,7 +17,7 @@ export const Display: React.FC<DisplayProps> = ({ value, expression, isLatex = f
     }
     
     const parsed = parseFloat(num);
-    if (isNaN(parsed)) return 'Error';
+    if (isNaN(parsed)) return num;
     
     if (Math.abs(parsed) > 1e12 || (Math.abs(parsed) < 1e-9 && parsed !== 0)) {
       return parsed.toExponential(6);

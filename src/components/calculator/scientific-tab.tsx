@@ -132,7 +132,7 @@ export default function ScientificTab() {
   }
 
   const handleEquals = () => {
-    if (expression && !expression.endsWith(' ')) {
+    if (expression && !/[\s(]$/.test(expression)) {
       let finalExpression = expression;
       
       const openParen = (finalExpression.match(/\(/g) || []).length;
@@ -189,7 +189,9 @@ export default function ScientificTab() {
     }
     const handleMemoryAdd = () => {
       try {
-        const currentValue = math.bignumber(evaluateExpression(expression) || '0');
+        const currentDisplayValue = evaluateExpression(isResult ? display : expression);
+        if (currentDisplayValue === "Error") return;
+        const currentValue = math.bignumber(currentDisplayValue || '0');
         setMemory(math.add(memory, currentValue));
       } catch (e) {
         console.error("Invalid expression for M+");
@@ -197,7 +199,9 @@ export default function ScientificTab() {
     };
     const handleMemorySubtract = () => {
        try {
-        const currentValue = math.bignumber(evaluateExpression(expression) || '0');
+        const currentDisplayValue = evaluateExpression(isResult ? display : expression);
+        if (currentDisplayValue === "Error") return;
+        const currentValue = math.bignumber(currentDisplayValue || '0');
         setMemory(math.subtract(memory, currentValue));
       } catch (e) {
         console.error("Invalid expression for M-");
