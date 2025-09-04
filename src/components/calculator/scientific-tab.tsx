@@ -35,9 +35,7 @@ export default function ScientificTab() {
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
 
   math.config({
-      number: 'BigNumber',
-      precision: 64,
-      epsilon: 1e-12,
+      angle: angleMode,
   });
 
   const evaluateExpression = (exp: string): string => {
@@ -55,7 +53,7 @@ export default function ScientificTab() {
 
       if (!evaluatableExpression) return '0';
 
-      const result = math.evaluate(evaluatableExpression, { angle: angleMode });
+      const result = math.evaluate(evaluatableExpression);
       if (result === undefined || result === null || typeof result === 'function') return "Error";
       
       return math.format(result, { notation: 'auto', precision: 10 });
@@ -71,7 +69,7 @@ export default function ScientificTab() {
       setDisplay(char);
       setIsResult(false);
     } else {
-      const newExpression = expression === '' && char !== '.' ? char : expression + char;
+      const newExpression = expression === '0' ? char : expression + char;
       setExpression(newExpression);
       setDisplay(newExpression);
     }
@@ -151,14 +149,25 @@ export default function ScientificTab() {
   }
   
   const toggleAngleMode = () => {
-    setAngleMode(prev => prev === 'deg' ? 'rad' : 'deg');
+    setAngleMode(prev => {
+        const newMode = prev === 'deg' ? 'rad' : 'deg';
+        math.config({angle: newMode});
+        return newMode;
+    });
   }
+  
+  const toggleSign = () => {
+    if (display === '0' || isResult) return;
+    setExpression(prev => prev.startsWith('(-') ? prev.slice(2, -1) : `(-${prev})`);
+    setDisplay(prev => prev.startsWith('(-') ? prev.slice(2, -1) : `(-${prev})`);
+  };
 
   return (
       <div className="w-full max-w-md mx-auto space-y-4">
           <Display value={display} expression={`${angleMode.toUpperCase()} | ${isResult ? `Ans = ${display}` : expression}`} />
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-7 gap-2">
                 <CalculatorButton onClick={toggleAngleMode} label={angleMode === 'deg' ? 'RAD' : 'DEG'} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('tan')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -170,29 +179,29 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={() => handleInput(')')} label=")" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={clear} label="AC" className="bg-destructive/80 text-destructive-foreground hover:bg-destructive" />
                 <CalculatorButton onClick={backspace} label="DEL" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleOperator('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                <CalculatorButton onClick={() => handleOperator('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80 col-span-2" />
 
                 <CalculatorButton onClick={() => handleFunction('sqrt')} label="√" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['7', '8', '9'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleOperator('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleOperator('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                <CalculatorButton onClick={() => handleOperator('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80 col-span-2" />
 
                 <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleOperator('%')} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80 col-span-2" />
                 
                 <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleOperator('^2')} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80 col-span-2" />
                 
                 <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleOperator('*10^')} label={<InlineMath math="10^{x}" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('^(1/')} label="ʸ√x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
+                <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90 col-span-2" />
             </div>
       </div>
   );
