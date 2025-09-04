@@ -27,7 +27,7 @@ const CalculatorButton = ({
   <button
     onClick={onClick}
     data-active={isActive}
-    className={`flex items-center justify-center h-14 text-xl font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${className} ${isActive ? 'bg-primary text-primary-foreground' : ''}`}
+    className={`flex items-center justify-center h-12 text-lg font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${className}`}
   >
     {label}
   </button>
@@ -58,7 +58,8 @@ export default function ScientificTab() {
         .replace(/ln\(/g, 'log(')
         .replace(/E/g, 'e')
         .replace(/ans/g, `(${lastAnswer})`)
-        .replace(/−/g, '-');
+        .replace(/−/g, '-')
+        .replace(/\|([^|]+)\|/g, 'abs($1)');
         
 
       if (isSecondFunctionActive) {
@@ -138,6 +139,17 @@ export default function ScientificTab() {
   const handleReciprocal = () => {
     handleOperator('^(-1)');
   }
+  
+  const handleAbs = () => {
+    if (isResult) {
+      setExpression('abs(');
+      setDisplay('abs(');
+      setIsResult(false);
+    } else {
+      setExpression(prev => prev + 'abs(');
+      setDisplay(prev => prev + 'abs(');
+    }
+  }
 
   const handleEquals = () => {
     if (expression) {
@@ -189,7 +201,6 @@ export default function ScientificTab() {
     if (expression === '0' || expression === '') return;
 
     // Regex to find the last number in the expression.
-    // It can be a decimal, integer, and can be at the start or after an operator.
     const lastNumberRegex = /([+\-×÷(]|^)([\d.]+)$/;
     const match = expression.match(lastNumberRegex);
 
@@ -198,23 +209,16 @@ export default function ScientificTab() {
         let number = match[2];
         let newExpression;
 
-        // Find the start index of the matched part
         const matchIndex = expression.lastIndexOf(match[0]);
         const expressionPrefix = expression.substring(0, matchIndex);
 
         if (prefix === '+') {
-            // Change 5+5 to 5-5
             newExpression = `${expressionPrefix}-` + number;
         } else if (prefix === '-') {
-             // Change 5-5 to 5+5
             newExpression = `${expressionPrefix}+` + number;
         } else if (prefix === '' || prefix === '(') {
-            // It's the first number or after a parenthesis, so prepend a minus
-            // e.g. "5" becomes "-5" or "(5" becomes "(-5"
             newExpression = `${expressionPrefix}${prefix}-` + number;
         } else if (prefix === '×' || prefix === '÷') {
-             // It's after multiplication or division, so we need to add parens with negation
-             // e.g. "5*5" becomes "5*(-5)"
              newExpression = `${expressionPrefix}${prefix}(-` + number + ')';
         }
          
@@ -223,7 +227,6 @@ export default function ScientificTab() {
             setDisplay(newExpression);
         }
     } else if (!isNaN(parseFloat(expression))) {
-        // Handle case where expression is just a single number that might be negative
         const num = parseFloat(expression);
         const newExp = String(num * -1);
         setExpression(newExp);
@@ -237,6 +240,15 @@ export default function ScientificTab() {
     const handleMemoryRecall = () => {
       const memVal = math.format(memory);
       handleInput(memVal);
+    }
+    const handleMemoryStore = () => {
+        try {
+            const currentDisplayValue = evaluateExpression(isResult ? display : expression);
+            if (currentDisplayValue === "Error") return;
+            setMemory(math.bignumber(currentDisplayValue || '0'));
+        } catch(e) {
+            console.error("Invalid expression for MS");
+        }
     }
     const handleMemoryAdd = () => {
       try {
@@ -260,68 +272,71 @@ export default function ScientificTab() {
     };
 
   return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-sm mx-auto space-y-4">
           <Display value={display} expression={`${angleMode.toUpperCase()} | ${isResult ? `Ans = ${display}` : expression}`} />
-          <div className="grid grid-cols-5 gap-2">
-              {/* Row 1 */}
-              <CalculatorButton onClick={() => setIsSecondFunctionActive(p => !p)} label="2nd" isActive={isSecondFunctionActive} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 data-[active=true]:bg-primary" />
-              <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={clear} label="AC" className="bg-destructive/80 text-destructive-foreground hover:bg-destructive" />
-              <CalculatorButton onClick={backspace} label="DEL" className="bg-destructive/80 text-destructive-foreground hover:bg-destructive" />
+          <div className="space-y-2">
+            {/* Advanced Functions */}
+            <div className="grid grid-cols-5 gap-2">
+              <CalculatorButton onClick={handleMemoryClear} label="MC" className="bg-orange-500/80 text-white hover:bg-orange-500" />
+              <CalculatorButton onClick={handleMemoryRecall} label="MR" className="bg-orange-500/80 text-white hover:bg-orange-500" />
+              <CalculatorButton onClick={handleMemoryAdd} label="M+" className="bg-orange-500/80 text-white hover:bg-orange-500" />
+              <CalculatorButton onClick={handleMemorySubtract} label="M-" className="bg-orange-500/80 text-white hover:bg-orange-500" />
+              <CalculatorButton onClick={handleMemoryStore} label="MS" className="bg-orange-500/80 text-white hover:bg-orange-500" />
               
-              {/* Row 2 */}
-              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^(3)' : '^2')} label={isSecondFunctionActive ? <InlineMath math="x^3" /> : <InlineMath math="x^2" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput('(')} label="(" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput(')')} label=")" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleOperator('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              
-              {/* Row 3 */}
-              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^(1/3)' : 'sqrt(')} label={isSecondFunctionActive ? <InlineMath math="\sqrt[3]{x}" /> : "√"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput('7')} label="7" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('8')} label="8" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('9')} label="9" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleOperator('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-500/80 text-white hover:bg-blue-500" />
+              <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-green-500/80 text-white hover:bg-green-500" />
 
-              {/* Row 4 */}
-              <CalculatorButton onClick={() => handleOperator(isSecondFunctionActive ? '^' : '^(1/')} label={isSecondFunctionActive ? <InlineMath math="x^y" /> : <InlineMath math="\sqrt[y]{x}" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput('4')} label="4" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('5')} label="5" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('6')} label="6" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleOperator('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+              <CalculatorButton onClick={() => handleFunction('sinh')} label="sinh" className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={() => handleFunction('cosh')} label="cosh" className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={() => handleFunction('tanh')} label="tanh" className="bg-purple-500/80 text-white hover:bg-purple-500" />
+              <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-green-500/80 text-white hover:bg-green-500" />
+              <CalculatorButton onClick={() => handleOperator('!')} label="n!" className="bg-red-500/80 text-white hover:bg-red-500" />
               
-              {/* Row 5 */}
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput('1')} label="1" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('2')} label="2" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('3')} label="3" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/8-0" />
+              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'log' : 'ln')} label={isSecondFunctionActive ? "ln" : "log"} className="bg-teal-500/80 text-white hover:bg-teal-500" />
+              <CalculatorButton onClick={() => handleFunction('log2')} label={<InlineMath math="log_2"/>} className="bg-teal-500/80 text-white hover:bg-teal-500" />
+              <CalculatorButton onClick={() => handleFunction('exp')} label={<InlineMath math="e^x" />} className="bg-teal-500/80 text-white hover:bg-teal-500" />
+              <CalculatorButton onClick={() => handleOperator('^2')} label={<InlineMath math="x^2" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
+              <CalculatorButton onClick={() => handleOperator('^3')} label={<InlineMath math="x^3" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
               
-              {/* Row 6 */}
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-              <CalculatorButton onClick={toggleSign} label="±" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+              <CalculatorButton onClick={() => handleOperator('sqrt(')} label="√" className="bg-cyan-500/80 text-white hover:bg-cyan-500" />
+              <CalculatorButton onClick={() => handleOperator('^(1/3)')} label={<InlineMath math="\sqrt[3]{x}" />} className="bg-cyan-500/80 text-white hover:bg-cyan-500" />
+              <CalculatorButton onClick={() => handleOperator('^')} label={<InlineMath math="x^y" />} className="bg-blue-500/80 text-white hover:bg-blue-500" />
+              <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-blue-500/80 text-white hover:bg-blue-500" />
+              <CalculatorButton onClick={handleAbs} label="|x|" className="bg-blue-500/80 text-white hover:bg-blue-500" />
+            </div>
 
-              {/* Row 7 */}
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'log2' : 'log')} label={isSecondFunctionActive ? <InlineMath math="log_2"/> : "log"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'exp' : 'ln')} label={isSecondFunctionActive ? <InlineMath math="e^x" />: "ln"} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={() => handleConstant('ans')} label="Ans" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
-              
-              {/* Row 8 */}
-              <CalculatorButton onClick={toggleAngleMode} label={angleMode === 'deg' ? 'Rad' : 'Deg'} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 col-span-2" />
-              <CalculatorButton onClick={() => handleOperator('*10^')} label={<InlineMath math=" \times 10^{x}" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 col-span-3" />
+            {/* Basic Numpad */}
+            <div className="grid grid-cols-4 gap-2">
+                <CalculatorButton onClick={clear} label="C" className="bg-red-500/80 text-white hover:bg-red-500 col-span-1" />
+                <CalculatorButton onClick={toggleSign} label="±" className="bg-muted text-muted-foreground hover:bg-muted/80" />
+                <CalculatorButton onClick={() => handleOperator('%')} label="%" className="bg-muted text-muted-foreground hover:bg-muted/80" />
+                <CalculatorButton onClick={() => handleOperator('/')} label="÷" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-              {/* Row 9 */}
-              <CalculatorButton onClick={handleMemoryClear} label="MC" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={handleMemoryRecall} label="MR" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={handleMemoryAdd} label="M+" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-              <CalculatorButton onClick={handleMemorySubtract} label="M-" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleInput('7')} label="7" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('8')} label="8" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('9')} label="9" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleOperator('*')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+
+                <CalculatorButton onClick={() => handleInput('4')} label="4" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('5')} label="5" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('6')} label="6" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                
+                <CalculatorButton onClick={() => handleInput('1')} label="1" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('2')} label="2" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleInput('3')} label="3" className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
+                
+                <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted col-span-2" />
+                <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
+                <CalculatorButton onClick={handleEquals} label="=" className="bg-green-500 text-white hover:bg-green-500/90" />
+            </div>
           </div>
       </div>
   );
 }
+
+    
