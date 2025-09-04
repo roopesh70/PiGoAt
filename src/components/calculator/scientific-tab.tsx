@@ -1,10 +1,15 @@
+
 "use client";
 
 import { useState } from 'react';
 import { Display } from './display';
 import { create, all } from 'mathjs';
+import { InlineMath } from 'react-katex';
 
-const math = create(all, {});
+const math = create(all, {
+  number: 'BigNumber',
+  precision: 64,
+});
 
 const CalculatorButton = ({
   onClick,
@@ -29,6 +34,12 @@ export default function ScientificTab() {
   const [isResult, setIsResult] = useState(false);
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
 
+  math.config({
+      number: 'BigNumber',
+      precision: 64,
+      epsilon: 1e-12,
+  });
+
   const evaluateExpression = (exp: string): string => {
     try {
       let evaluatableExpression = exp
@@ -44,23 +55,7 @@ export default function ScientificTab() {
 
       if (!evaluatableExpression) return '0';
 
-      const config = {
-        matrix: 'Matrix',
-        number: 'number',
-      };
-      const math_typed = create(all, config);
-
-      // Temporarily override trig functions to work with degrees
-      if (angleMode === 'deg') {
-        const sin_typed = math_typed.sin;
-        const cos_typed = math_typed.cos;
-        const tan_typed = math_typed.tan;
-        (math_typed.sin as any) = (x: number) => sin_typed(x * Math.PI / 180);
-        (math_typed.cos as any) = (x: number) => cos_typed(x * Math.PI / 180);
-        (math_typed.tan as any) = (x: number) => tan_typed(x * Math.PI / 180);
-      }
-
-      const result = math_typed.evaluate(evaluatableExpression);
+      const result = math.evaluate(evaluatableExpression, { angle: angleMode });
       if (result === undefined || result === null || typeof result === 'function') return "Error";
       
       return math.format(result, { notation: 'auto', precision: 10 });
@@ -87,12 +82,11 @@ export default function ScientificTab() {
       setExpression(display + op);
       setDisplay(display + op);
       setIsResult(false);
-    } else if (expression !== '' || ['-','sqrt('].includes(op)) {
+    } else if (expression !== '' || ['-', 'sqrt('].includes(op)) {
         const newExpression = expression + op;
         setExpression(newExpression);
         setDisplay(newExpression);
     } else if (op === '-') {
-        // Allow starting with a minus
         setExpression(op);
         setDisplay(op);
     }
@@ -196,10 +190,12 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={() => handleOperator('*10^')} label="10^x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('*10^')} label={<InlineMath math="10^x" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('^(1/')} label="ʸ√x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
   );
 }
+
+  
