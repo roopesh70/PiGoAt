@@ -190,12 +190,10 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={() => handleOperator('*10^')} label={<InlineMath math="10^x" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('*10^')} label={<InlineMath math="10^{x}" />} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('^(1/')} label="ʸ√x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
   );
 }
-
-  
