@@ -6,11 +6,16 @@ import { create, all } from 'mathjs';
 
 const math = create(all, {});
 
-// Overwrite the default config to use degrees instead of radians
-math.config({
-    number: 'BigNumber',
-    precision: 64
-});
+// Overwrite the default config to use degrees instead of radians for trig functions
+// This is more intuitive for a calculator interface.
+// The user can switch between modes.
+const originalSin = math.sin;
+const originalCos = math.cos;
+const originalTan = math.tan;
+
+(math.sin as any) = (x: number) => originalSin(x * Math.PI / 180);
+(math.cos as any) = (x: number) => originalCos(x * Math.PI / 180);
+(math.tan as any) = (x: number) => originalTan(x * Math.PI / 180);
 
 const CalculatorButton = ({
   onClick,
@@ -33,6 +38,7 @@ export default function ScientificTab() {
   const [expression, setExpression] = useState('');
   const [display, setDisplay] = useState('0');
   const [isResult, setIsResult] = useState(false);
+  const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
 
   const evaluateExpression = (exp: string): string => {
     try {
@@ -44,14 +50,22 @@ export default function ScientificTab() {
             .replace(/\^/g, '^')
             .replace(/log\(/g, 'log10(')
             .replace(/ln\(/g, 'log(')
-            .replace(/E/g, 'e'); // handle e
-            
+            .replace(/E/g, 'e');
+
       if (!evaluatableExpression) return '0';
 
+      // Handle trig functions based on mode
+      if (angleMode === 'rad') {
+          evaluatableExpression = evaluatableExpression
+              .replace(/sin\(/g, 'sin(rad(')
+              .replace(/cos\(/g, 'cos(rad(')
+              .replace(/tan\(/g, 'tan(rad(');
+      }
+      
       const result = math.evaluate(evaluatableExpression);
       if (result === undefined || result === null || typeof result === 'function') return 'Error';
 
-      const formattedResult = math.format(result, { precision: 10 });
+      const formattedResult = math.format(result, { notation: 'auto', precision: 10 });
       return String(formattedResult);
     } catch (error) {
       console.error(error);
@@ -65,7 +79,7 @@ export default function ScientificTab() {
       setDisplay(char);
       setIsResult(false);
     } else {
-      const newExpression = expression === '0' && char !== '.' ? char : expression + char;
+      const newExpression = expression === '' && char !== '.' ? char : expression + char;
       setExpression(newExpression);
       setDisplay(newExpression);
     }
@@ -76,7 +90,7 @@ export default function ScientificTab() {
       setExpression(display + op);
       setDisplay(display + op);
       setIsResult(false);
-    } else if (expression !== '' && !/[+\-×÷^%!]$/.test(expression.trim().slice(-1))) {
+    } else if (expression !== '' || op ==='-') { // allow starting with minus
         const newExpression = expression + op;
         setExpression(newExpression);
         setDisplay(newExpression);
@@ -84,27 +98,17 @@ export default function ScientificTab() {
   };
   
   const handleFunction = (func: string) => {
-    if(isResult) {
-        setExpression(`${func}(`);
-        setDisplay(`${func}(`);
-        setIsResult(false);
-    } else {
-        const newExpression = expression + `${func}(`;
-        setExpression(newExpression);
-        setDisplay(newExpression);
-    }
+    const newExpression = expression + `${func}(`;
+    setExpression(newExpression);
+    setDisplay(newExpression);
+    setIsResult(false);
   };
 
   const handleConstant = (constant: string) => {
-      if(isResult) {
-          setExpression(constant);
-          setDisplay(constant);
-          setIsResult(false);
-      } else {
-         const newExpression = expression + constant;
-         setExpression(newExpression);
-         setDisplay(newExpression);
-      }
+     const newExpression = expression + constant;
+     setExpression(newExpression);
+     setDisplay(newExpression);
+     setIsResult(false);
   }
   
   const handleReciprocal = () => {
@@ -142,17 +146,21 @@ export default function ScientificTab() {
        setDisplay(newExp || '0');
     }
   }
+
+  const toggleAngleMode = () => {
+    setAngleMode(prev => prev === 'deg' ? 'rad' : 'deg');
+  }
   
   return (
       <div className="w-full max-w-md mx-auto space-y-4">
-          <Display value={display} expression={isResult ? `Ans = ${display}` : expression} />
+          <Display value={display} expression={`${angleMode.toUpperCase()} | ${isResult ? `Ans = ${display}` : expression}`} />
           <div className="grid grid-cols-6 gap-2">
+                <CalculatorButton onClick={toggleAngleMode} label={`${angleMode === 'deg' ? 'RAD' : 'DEG'}`} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('sin')} label="sin" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('cos')} label="cos" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('tan')} label="tan" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                  <CalculatorButton onClick={() => handleFunction('log')} label="log" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleFunction('ln')} label="ln" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                 <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 
                 <CalculatorButton onClick={() => handleOperator('^')} label="xʸ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('(')} label="(" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
@@ -166,12 +174,12 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={() => handleOperator('!')} label="x!" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('×')} label="×" className="bg-accent text-accent-foreground hover:bg-accent/80" />
 
-                <CalculatorButton onClick={() => handleConstant('π')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleConstant('pi')} label="π" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['4', '5', '6'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleOperator('%')} label="%" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('-')} label="−" className="bg-accent text-accent-foreground hover:bg-accent/80" />
                 
-                <CalculatorButton onClick={() => handleFunction('abs')} label="|x|" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleConstant('e')} label="e" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 {['1', '2', '3'].map(digit => <CalculatorButton key={digit} onClick={() => handleInput(digit)} label={digit} className="bg-card hover:bg-muted" />)}
                 <CalculatorButton onClick={() => handleOperator('^2')} label="x²" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleOperator('+')} label="+" className="bg-accent text-accent-foreground hover:bg-accent/80" />
@@ -179,8 +187,8 @@ export default function ScientificTab() {
                 <CalculatorButton onClick={handleReciprocal} label="1/x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={() => handleInput('0')} label="0" className="bg-card hover:bg-muted" />
                 <CalculatorButton onClick={() => handleInput('.')} label="." className="bg-card hover:bg-muted" />
-                <CalculatorButton onClick={() => handleOperator('*10^')} label="*10ˣ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
-                <CalculatorButton onClick={() => handleFunction('nthRoot')} label="ʸ√x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('10^')} label="10ˣ" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
+                <CalculatorButton onClick={() => handleOperator('^(1/')} label="ʸ√x" className="bg-secondary text-secondary-foreground hover:bg-secondary/80" />
                 <CalculatorButton onClick={handleEquals} label="=" className="bg-primary text-primary-foreground hover:bg-primary/90" />
             </div>
       </div>
