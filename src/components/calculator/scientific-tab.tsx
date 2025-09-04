@@ -4,15 +4,13 @@ import { useState } from 'react';
 import { Display } from './display';
 import { create, all } from 'mathjs';
 
-const math = create(all, {
+const math = create(all, {});
+
+// Overwrite the default config to use degrees instead of radians
+math.config({
     number: 'BigNumber',
     precision: 64
 });
-
-math.config({
-    number: 'number',
-});
-
 
 const CalculatorButton = ({
   onClick,
