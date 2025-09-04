@@ -288,7 +288,7 @@ export default function ScientificTab() {
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asin' : 'sin')} label={isSecondFunctionActive ? <InlineMath math="sin^{-1}" /> : "sin"} className={funcBtnClass} />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'acos' : 'cos')} label={isSecondFunctionActive ? <InlineMath math="cos^{-1}" /> : "cos"} className={funcBtnClass} />
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'atan' : 'tan')} label={isSecondFunctionActive ? <InlineMath math="tan^{-1}" /> : "tan"} className={funcBtnClass} />
-              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-900/80 hover:bg-blue-900" />
+              <CalculatorButton onClick={toggleAngleMode} label={angleMode.toUpperCase()} className="bg-blue-900/80 hover:bg-blue-900 text-white" />
               <CalculatorButton onClick={() => handleConstant('pi')} label="π" className={funcBtnClass} />
 
               <CalculatorButton onClick={() => handleFunction(isSecondFunctionActive ? 'asinh' : 'sinh')} label={isSecondFunctionActive ? <InlineMath math="sinh^{-1}" /> : "sinh"} className={funcBtnClass} />
