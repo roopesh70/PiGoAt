@@ -177,30 +177,53 @@ export default function ScientificTab() {
   
   const toggleSign = () => {
     if (display === '0' || isResult) return;
-    
-    // This logic is simplified and might not be robust for all expressions.
-    // It's intended to work for the current number being input.
-    setExpression(prev => {
-        const parts = prev.split(/([+\-×÷(])/);
-        const lastPart = parts.pop() || '';
-        
-        if (lastPart.startsWith('-')) {
-            parts.push(lastPart.substring(1));
-        } else if (lastPart !== '') {
-            parts.push(`-${lastPart}`);
-        } else {
-            // Handle case where last char is an operator
-            const secondLast = parts.pop() || '';
-            if(secondLast === '('){
-                 parts.push(secondLast, '-');
-            } else {
-                 parts.push(secondLast, lastPart, '-');
-            }
-        }
-        return parts.join('');
-    });
 
-    setDisplay(prev => prev.startsWith('-') ? prev.substring(1) : `-${prev}`);
+    setExpression(prev => {
+        const operators = /(?<!e)[+\-×÷(]/g;
+        let lastOpIndex = -1;
+        let match;
+        while ((match = operators.exec(prev)) !== null) {
+            lastOpIndex = match.index;
+        }
+
+        if (lastOpIndex === -1) { // No operator found, negate the whole thing
+            return prev.startsWith('-') ? prev.substring(1) : `-${prev}`;
+        }
+
+        const prefix = prev.substring(0, lastOpIndex + 1);
+        const numberToToggle = prev.substring(lastOpIndex + 1);
+        
+        if(prev[lastOpIndex] === '(') {
+            return `${prefix}(-${numberToToggle}`
+        }
+
+        if (prev[lastOpIndex] === '+') {
+            return `${prev.substring(0, lastOpIndex)}-${numberToToggle}`;
+        }
+        
+        if (prev[lastOpIndex] === '−' || prev[lastOpIndex] === '-') {
+             return `${prev.substring(0, lastOpIndex)}+${numberToToggle}`;
+        }
+        
+        // It's a multiply or divide, so we need to add a negation
+        return `${prefix}(-${numberToToggle}`;
+    });
+     setDisplay(prev => {
+        const operators = /(?<!e)[+\-×÷(]/g;
+        let lastOpIndex = -1;
+        let match;
+        while ((match = operators.exec(prev)) !== null) {
+            lastOpIndex = match.index;
+        }
+
+        if (lastOpIndex === -1) { // No operator found, negate the whole thing
+            return prev.startsWith('-') ? prev.substring(1) : `-${prev}`;
+        }
+        
+        const numberToToggle = prev.substring(lastOpIndex + 1);
+        const prefix = prev.substring(0, lastOpIndex + 1);
+        return numberToToggle.startsWith('-') ? prefix + numberToToggle.substring(1) : prefix + `-${numberToToggle}`
+    });
   };
 
 
@@ -279,3 +302,5 @@ export default function ScientificTab() {
       </div>
   );
 }
+
+    
