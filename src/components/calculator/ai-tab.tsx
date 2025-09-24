@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 
 
 const FormSchema = z.object({
-  query: z.string().min(3, { message: 'Query must be at least 3 characters long.' }),
+  query: z.string().min(3, { message: 'Query must be at least 3 characters long.' }).optional().or(z.literal('')),
 });
 type FormValues = z.infer<typeof FormSchema>;
 
@@ -49,7 +49,7 @@ export default function AiTab() {
     if (showCamera) {
       const getCameraPermission = async () => {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
           setHasCameraPermission(true);
           streamRef.current = stream;
           if (videoRef.current) {
@@ -63,7 +63,7 @@ export default function AiTab() {
           toast({
             variant: 'destructive',
             title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings to use this feature.',
+            description: 'Could not access the back camera. Please enable camera permissions in your browser settings.',
           });
         }
       };
@@ -143,7 +143,7 @@ export default function AiTab() {
 
     try {
       const response = await naturalLanguageMathQuery({ 
-          query: data.query,
+          query: data.query || '',
           photoDataUri: imageData || undefined
       });
       setResult(response);
