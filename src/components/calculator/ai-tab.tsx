@@ -38,6 +38,13 @@ export default function AiTab() {
   const streamRef = useRef<MediaStream | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      query: '',
+    }
+  });
+
   useEffect(() => {
     if (showCamera) {
       const getCameraPermission = async () => {
@@ -213,6 +220,7 @@ export default function AiTab() {
                                     <Upload className="mr-2 h-4 w-4" />
                                     Upload Image
                                 </Button>
+
                                 <Button variant="outline" onClick={() => setShowCamera(true)}>
                                     <Video className="mr-2 h-4 w-4" />
                                     Use Camera
