@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,9 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { BrainCircuit, Loader2, Camera, X } from 'lucide-react';
+import { BrainCircuit, Loader2, Camera, X, Upload, Video } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+
 
 const FormSchema = z.object({
   query: z.string().min(3, { message: 'Query must be at least 3 characters long.' }),
@@ -26,15 +29,51 @@ export default function AiTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageData, setImageData] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      query: '',
-    },
-  });
+  useEffect(() => {
+    if (showCamera) {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          setHasCameraPermission(true);
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          setShowCamera(false);
+          setIsDialogOpen(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use this feature.',
+          });
+        }
+      };
+      getCameraPermission();
+    } else {
+        // Stop camera stream when not in use
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+    }
+     return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [showCamera]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -52,11 +91,30 @@ export default function AiTab() {
         const dataUri = reader.result as string;
         setImagePreview(URL.createObjectURL(file));
         setImageData(dataUri);
+        setIsDialogOpen(false);
       };
       reader.readAsDataURL(file);
     }
   };
   
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if(context) {
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            const dataUri = canvas.toDataURL('image/jpeg');
+            setImageData(dataUri);
+            setImagePreview(dataUri);
+        }
+        setShowCamera(false);
+        setIsDialogOpen(false);
+    }
+  }
+
   const removeImage = () => {
       setImagePreview(null);
       setImageData(null);
@@ -71,7 +129,7 @@ export default function AiTab() {
     setResult(null);
 
     if (!data.query && !imageData) {
-        setError('Please enter a query or upload an image.');
+        setError('Please enter a query or upload/capture an image.');
         setIsLoading(false);
         return;
     }
@@ -114,16 +172,55 @@ export default function AiTab() {
                       {...field}
                     />
                   </FormControl>
-                  <Button 
-                    type="button" 
-                    size="icon" 
-                    variant="ghost" 
-                    className="absolute bottom-2 right-2"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Camera className="h-5 w-5" />
-                    <span className="sr-only">Upload Image</span>
-                  </Button>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute bottom-2 right-2"
+                      >
+                        <Camera className="h-5 w-5" />
+                        <span className="sr-only">Upload or Capture Image</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add an Image</DialogTitle>
+                        </DialogHeader>
+                        {showCamera ? (
+                             <div className="space-y-4">
+                                <div className="bg-black rounded-md overflow-hidden aspect-video relative">
+                                    <video ref={videoRef} className="w-full h-full" autoPlay muted playsInline />
+                                    <canvas ref={canvasRef} className="hidden" />
+                                     {hasCameraPermission === false && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                                            <p className="text-white">Camera access denied.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <Button variant="outline" onClick={() => setShowCamera(false)}>Back</Button>
+                                    <Button onClick={handleCapture} disabled={hasCameraPermission === false}>
+                                        <Camera className="mr-2 h-4 w-4" />
+                                        Capture
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Upload Image
+                                </Button>
+                                <Button variant="outline" onClick={() => setShowCamera(true)}>
+                                    <Video className="mr-2 h-4 w-4" />
+                                    Use Camera
+                                </Button>
+                            </div>
+                        )}
+                    </DialogContent>
+                  </Dialog>
                   <input 
                     type="file" 
                     ref={fileInputRef} 

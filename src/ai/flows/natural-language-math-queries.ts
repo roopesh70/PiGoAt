@@ -1,3 +1,4 @@
+
 // src/ai/flows/natural-language-math-queries.ts
 'use server';
 
@@ -50,9 +51,9 @@ const prompt = ai.definePrompt({
 {{#if query}}Query: {{{query}}}{{/if}}
 {{#if photoDataUri}}Photo: {{media url=photoDataUri}}{{/if}}
 
-Result: 
-Explanation: `,
+Please provide the result and a clear, step-by-step explanation.`,
 });
+
 
 const naturalLanguageMathQueryFlow = ai.defineFlow(
   {
