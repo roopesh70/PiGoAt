@@ -14,6 +14,12 @@ import {z} from 'genkit';
 
 const NaturalLanguageMathQueryInputSchema = z.object({
   query: z.string().describe('The natural language math query.'),
+  photoDataUri: z
+    .string()
+    .optional()
+    .describe(
+      "A photo of a math problem, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type NaturalLanguageMathQueryInput = z.infer<
   typeof NaturalLanguageMathQueryInputSchema
@@ -39,9 +45,10 @@ const prompt = ai.definePrompt({
   name: 'naturalLanguageMathQueryPrompt',
   input: {schema: NaturalLanguageMathQueryInputSchema},
   output: {schema: NaturalLanguageMathQueryOutputSchema},
-  prompt: `You are a mathematical expert. You will take the user's math query and return the result and step by step explanation.
+  prompt: `You are a mathematical expert. You will take the user's math query and/or image and return the result and step by step explanation.
 
-Query: {{{query}}}
+{{#if query}}Query: {{{query}}}{{/if}}
+{{#if photoDataUri}}Photo: {{media url=photoDataUri}}{{/if}}
 
 Result: 
 Explanation: `,
