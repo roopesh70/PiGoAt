@@ -1,11 +1,4 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
-#
-# A good robots.txt file is important for SEO.
-#
-# You can use it to block crawlers from accessing parts of your site that you don't want them to see.
-# For example, you can block them from accessing your admin pages or your API endpoints.
-
+# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
-
-Sitemap: https://pigoat.vercel.app/sitemap.xml
+Sitemap: /sitemap.xml
